@@ -4,7 +4,7 @@ namespace print {
 	void done_work_percentage(double done_work, double total_work) {
 		fprintf(stderr, "\t[%7.3f%% of file is processed]", ((double)done_work / total_work * 100));
 	}
-	void reading_graph_fancy_text(bool done, double &last_printted_dot, int max_fancy_text_width, int n_dots, double& cur_time, double& total_work, double& done_work) {
+	void reading_graph_fancy_text(bool done, double &last_printted_dot, int max_fancy_text_width, int& n_dots, double& cur_time, double& total_work, double& done_work) {
 		if (done == false) {
 			if (cur_time - last_printted_dot > 1.0) {
 				std::cerr << "\r";
@@ -28,7 +28,7 @@ namespace print {
 		}
 	}
 	void statistics_table(int n, int m, int maximum_degree) {
-		int width = (5 * 2 - 1) + 12 + 15 + 12;
+		int width = (5 * 2 - 1) + 12 + 15 + 10;
 		std::string hline = " " + std::string(width, '-');
 		std::cerr << std::endl;
 		std::cerr << hline << std::endl;
