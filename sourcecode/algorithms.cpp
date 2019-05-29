@@ -15,7 +15,7 @@ namespace static_processing {
 					sampled_graph.add_new_edge(edge, false);
 				}
 			}
-			this->unnormalized_triangle_count = counting::triangle::exact_edge_centeric_global_counting(sampled_graph);
+			this->unnormalized_triangle_count = (double)counting::triangle::exact_edge_centeric_global_counting(sampled_graph);
 			return;
 		}
 
@@ -28,7 +28,7 @@ namespace static_processing {
 			std::vector <int> vertex_color;
 			int n = G.get_n_vertices();
 			for (int i = 0; i < n; i++) {
-				vertex_color.push_back(this->generate_random_int(0, n_color - 1));
+				vertex_color.push_back((int)this->generate_random_int(0, n_color - 1));
 			}
 
 			Graph sampled_graph;
@@ -54,9 +54,9 @@ namespace static_processing {
 				"Fast triangle counting through wedge sampling."
 				In Proceedings of the SIAM Conference on Data Mining, vol. 4, p. 5. 2013.
 			*/
-			std::vector<long long>& wedges = G.get_wedges();
-			auto& pair = this->weighted_sampling(wedges);
-			auto& wedge = G.get_wedge(pair.second, pair.first);
+			const std::vector<long long>& wedges = G.get_wedges();
+			const auto pair = this->weighted_sampling(wedges);
+			auto wedge = G.get_wedge(pair.second, pair.first);
 			this->unnormalized_triangle_count += G.get_adj_set(wedge[0]).find(wedge[2]) != G.get_adj_set(wedge[0]).end() ? 1.0 : 0.0; // check if wedge is closed (i.e. if it forms a triangle)
 			// unnormalized_triangle_count ???
 			return;
@@ -80,10 +80,10 @@ namespace streamming {
 			}
 			else {
 				if (this->generate_random_dbl(0., 1.) <= (double)reservoir_size / time_step) {
-					int remove_edge_index = this->generate_random_int(0, (int)reservoir.get_n_edges() - 1);
-					this->unnormalized_triangle_count -= counting::triangle::exact_edge_centeric_local_edge_counting(reservoir, reservoir.get_ith_edge[remove_edge_index]);
+					int remove_edge_index = (int)this->generate_random_int(0, (int)reservoir.get_n_edges() - 1);
+					this->unnormalized_triangle_count -= counting::triangle::exact_edge_centeric_local_edge_counting(reservoir, reservoir.get_ith_edge(remove_edge_index));
 					reservoir.replace_edge(new_edge, remove_edge_index, false);
-					this->unnormalized_triangle_count += counting::triangle::exact_edge_centeric_local_edge_counting(reservoir, reservoir.get_ith_edge[remove_edge_index]);
+					this->unnormalized_triangle_count += counting::triangle::exact_edge_centeric_local_edge_counting(reservoir, reservoir.get_ith_edge(remove_edge_index));
 				}
 			}
 			// TODO: triangle_count = unnormalized_triangle_count * ??
@@ -102,7 +102,7 @@ namespace streamming {
 			}
 			else {
 				if (this->generate_random_dbl(0., 1.) <= (double)reservoir_size / time_step) {
-					int remove_edge_index = this->generate_random_int(0, (int)reservoir.get_n_edges() - 1);
+					int remove_edge_index = (int)this->generate_random_int(0, (int)reservoir.get_n_edges() - 1);
 					reservoir.replace_edge(new_edge, remove_edge_index, false);
 				}
 			}

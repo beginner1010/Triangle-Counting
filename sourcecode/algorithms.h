@@ -37,9 +37,9 @@ namespace static_processing {
 	namespace local_sampling {
 		class algorithms : public base_algorithm_class::algorithms {
 		public:
-			algorithms() {
-				this->reset();
-			}
+			//algorithms() {
+			//	this->reset();
+			//}
 			/* Static graph: Approximation by local sampling */
 			void wedge_sampling(Graph& G);
 		};
@@ -51,9 +51,9 @@ namespace streamming{
 	namespace one_pass {
 		class algorithms : public base_algorithm_class::algorithms {
 		public:
-			algorithms() {
-				this->reset();
-			}
+			//algorithms() {
+			//	this->reset();
+			//}
 			void triest_base(Graph& reservoir, const int reservoir_size, const std::pair<int, int>& new_edge, const int& time_step);
 			void triest_impr(Graph& reservoir, const int reservoir_size, const std::pair<int, int>& new_edge, const int& time_step);
 			void mascot_C(Graph& reservoir, const double& p, const std::pair<int, int>& new_edge);

@@ -1,5 +1,4 @@
 #pragma once
-#include <random>
 #include "Graph.h"
 
 namespace counting {
@@ -12,5 +11,5 @@ namespace counting {
 
 namespace utill {
 	int intersect(Graph& G, const int &x, const int &y);
-	inline double normalized(const double unnormalized, const double factor);
+	double normalized(const double unnormalized, const double factor);
 }

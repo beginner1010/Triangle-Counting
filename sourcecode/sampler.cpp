@@ -1,15 +1,15 @@
 #include "sampler.h"
 
-template<class T>
-std::pair<int, T> sampler::weighted_sampling(std::vector<T>& cum_weights) {
-	T sum = cum_weights.back();
-	T random_weight = this->generate_random_int(1, sum);
+std::pair<int, long long > sampler::weighted_sampling(const std::vector<long long>& cum_weights) {
+	long long sum = cum_weights.back();
+	long long random_weight = this->generate_random_int(1, sum);
 	int lo = 0, hi = (int)cum_weights.size();
 	while (lo < hi) {
 		int mid = (lo + hi) >> 1;
 		if (cum_weights[mid] < random_weight) {
 			lo = mid + 1;
-		}else {
+		}
+		else {
 			hi = mid;
 		}
 	}

@@ -1,4 +1,8 @@
 #pragma once
+#include "utills.h"
+#include "IO.h"
+#include "fancy_printing.h"
+
 #include <iostream>
 #include <vector>
 #include <unordered_set>
@@ -6,7 +10,6 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
-#include <iomanip>
 #include <algorithm>
 #include <sys/stat.h>
 
@@ -92,7 +95,7 @@ private:
 	int n;
 	int maximum_degree;
 	const int text_interval = 100000;
-	const int max_fancy_text_width = 50;
+	const int max_fancy_text_width = 60;
 	int n_dots;
 	int line_number;
 	long long n_z; 
@@ -106,7 +109,6 @@ private:
 	void reindex(std::vector < int > &ordered);
 	void resize();
 
-	void reading_graph_fancy_text(bool done, double &last_printted_dot, double& cur_time);
 	void preprocessing();
 
 	void update_adj(const int &vertex_left, const int& vertex_right, const int mode, const bool use_vec = true);

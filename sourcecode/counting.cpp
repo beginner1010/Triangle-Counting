@@ -2,7 +2,7 @@
 
 namespace counting {
 	namespace triangle {
-		unsigned long long exact_edge_centeric_global_counting(Graph &G) {
+		unsigned long long exact_edge_centeric_global_counting(Graph& G) {
 			unsigned long long res = 0;
 			for (auto& edge : G.get_edges()) {
 				res += exact_edge_centeric_local_edge_counting(G, edge);
@@ -25,7 +25,7 @@ namespace counting {
 }
 
 namespace utill {
-	int intersect(Graph& G, const int &x, const int &y) {
+	int intersect(Graph& G, const int& x, const int& y) {
 		int ret = 0;
 		if (G.degree(x) < G.degree(y)) {
 			std::unordered_set<int> &y_adj_set = G.get_adj_set(y);
@@ -43,7 +43,7 @@ namespace utill {
 		}
 		return ret;
 	}
-	inline double normalized(const double unnormalized, const double factor) {
+	double normalized(const double unnormalized, const double factor) {
 		double ret = unnormalized * factor;
 		return ret;
 	}

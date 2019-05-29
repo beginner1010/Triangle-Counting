@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS 
 #include "Graph.h"
 
 Graph::Graph() {
@@ -8,15 +7,7 @@ Graph::~Graph() {}
 
 void Graph::read_from_file() {
 	this->preprocessing();
-
-	int width = (5 * 2 - 1) + 12 + 15 + 12;
-	std::string hline = " " + std::string(width, '-');
-	std::cerr << std::endl;
-	std::cerr << hline << std::endl;
-	std::cerr << " |" << std::setw(12) << "#edges"	<< " |" << std::setw(15) << "#vertices"	<< " |" << std::setw(12) << "max degree" << " |" << std::endl;
-	std::cerr << hline << std::endl;
-	std::cerr << " |" << std::setw(12) << this->m	<< " |" << std::setw(15) << this->n	<< " |" << std::setw(12) << this->maximum_degree << " |" << std::endl;
-	std::cerr << hline << std::endl;
+	print::statistics_table(this->n, this->m, this->maximum_degree);
 }
 
 int Graph::str_to_int(std::string& line) { std::stringstream aux; aux << line; int res; aux >> res; return res; }
@@ -24,29 +15,6 @@ int Graph::str_to_int(std::string& line) { std::stringstream aux; aux << line; i
 bool Graph::all_num(std::string &line) {
 	for (int i = 0; i < (int)line.size(); i++) if ((line[i] >= '0' && line[i] <= '9') == false) return false;
 	return true;
-}
-
-void Graph::reading_graph_fancy_text(bool done, double &last_printted_dot, double& cur_time) {
-	if (done == false) {
-		if (cur_time - last_printted_dot > 3.0) {
-			std::cerr << "\r";
-			std::cerr << std::string(max_fancy_text_width, ' ');
-			std::cerr << "\r";
-			std::cerr << " Processing the input graph";
-			for (int dots = 0; dots < n_dots; dots++)
-				std::cerr << ".";
-			n_dots = (n_dots + 1) % 4;
-			std::cerr.flush();
-			last_printted_dot = cur_time;
-		}
-	}
-	else {
-		std::cerr << "\r";
-		std::cerr << std::string(max_fancy_text_width, ' ');
-		std::cerr << "\r";
-		std::cerr << " The input graph is processed in " << cur_time << "(secs). See the statistics below:";
-		std::cerr.flush();
-	}
 }
 
 int Graph::get_vertex_index(long long vertex) {
@@ -61,7 +29,7 @@ int Graph::get_vertex_index(long long vertex) {
 	return this->vertex_index[vertex];
 }
 
-void Graph::update_adj(const int &vertex_left, const int& vertex_right, const int mode, const bool use_vec = true) {
+void Graph::update_adj(const int &vertex_left, const int& vertex_right, const int mode, const bool use_vec) {
 	if (mode == -1) {
 		this->adj_set[vertex_left].erase(vertex_right);
 		this->adj_set[vertex_right].erase(vertex_left);
@@ -79,21 +47,21 @@ void Graph::update_adj(const int &vertex_left, const int& vertex_right, const in
 	}
 }
 
-void Graph::update_adj(const std::pair<int, int>& edge, const int mode, const bool use_vec = true) {
+void Graph::update_adj(const std::pair<int, int>& edge, const int mode, const bool use_vec) {
 	this->update_adj(edge.first, edge.second, mode, use_vec);
 }
 
-void Graph::add_new_edge(const int& vertex_left, const int& vertex_right, const bool use_vec = true) {
+void Graph::add_new_edge(const int& vertex_left, const int& vertex_right, const bool use_vec) {
 	this->m++;
 	this->edges.push_back(std::make_pair(vertex_left, vertex_right));
 	this->update_adj(vertex_left, vertex_right, +1, use_vec);
 }
 
-void Graph::add_new_edge(const std::pair<int, int> &edge, const bool use_vec = true) {
+void Graph::add_new_edge(const std::pair<int, int> &edge, const bool use_vec) {
 	this->add_new_edge(edge.first, edge.second, use_vec);
 }
 
-void Graph::replace_edge(const std::pair<int, int> &new_edge, const int& remove_index, const bool use_vec = true) {
+void Graph::replace_edge(const std::pair<int, int> &new_edge, const int& remove_index, const bool use_vec) {
 	this->update_adj(this->edges[remove_index], -1, use_vec); // remove the old edge
 	this->edges[remove_index] = new_edge; // replace with new edge
 	this->update_adj(this->edges[remove_index], +1, use_vec); // update adj with new edge
@@ -101,14 +69,21 @@ void Graph::replace_edge(const std::pair<int, int> &new_edge, const int& remove_
 
 void Graph::preprocessing() {
 	this->clear();
+
 	std::ios::sync_with_stdio(false);
-	std::string line;
+	
 	std::unordered_set < long long > seen_edges;
 	double last_printed_dot = -1000;
 	double cur_time = 0;
+	double total_work = (double)IO::get_file_size();
+	double done_work = 0;
+	char char_line[1024];
 
-	while (std::getline(std::cin, line)) {
-		reading_graph_fancy_text(false, last_printed_dot, cur_time);
+	while (std::fgets(char_line, 1024, IO::fin)) {
+		std::string line = std::string(char_line);
+		done_work += (double)line.size();
+
+		print::reading_graph_fancy_text(false, last_printed_dot, this->max_fancy_text_width, this->n_dots, cur_time, total_work, done_work);
 		line_number++;
 
 		clock_t start_time = clock();
@@ -141,7 +116,7 @@ void Graph::preprocessing() {
 		clock_t end_time = clock();
 		cur_time += ((double)end_time - start_time) / CLOCKS_PER_SEC;
 	}
-	reading_graph_fancy_text(true, last_printed_dot, cur_time);
+	print::reading_graph_fancy_text(true, last_printed_dot, this->max_fancy_text_width, this->n_dots, cur_time, total_work, done_work);
 }
 
 void Graph::process_wedges() {
