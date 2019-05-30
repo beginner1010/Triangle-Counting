@@ -40,4 +40,5 @@ namespace helper_functions {
 	std::string to_str(int x);
 	int to_int(const std::string& str);
 	bool is_int_num(const std::string& str);
+	long long choose2(int x);
 }

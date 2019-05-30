@@ -3,7 +3,7 @@
 /* Static graph: Approximation by one shot sampling */
 namespace static_processing {
 	namespace one_shot {
-		void algorithms::doulion(Graph& G, const double p) {
+		void algorithms::doulion(Graph& G, const double p, bool compressed) {
 			/*
 				Tsourakakis, Charalampos E., U.Kang, Gary L.Miller, and Christos Faloutsos.
 				"Doulion: counting triangles in massive graphs with a coin."
@@ -19,7 +19,7 @@ namespace static_processing {
 			return;
 		}
 
-		void algorithms::colorful_counting(Graph& G, const int n_color) {
+		void algorithms::colorful_counting(Graph& G, const int n_color, bool compressed) {
 			/*
 				Pagh, Rasmus, and Charalampos E. Tsourakakis.
 				"Colorful triangle counting and a mapreduce implementation."
@@ -44,7 +44,7 @@ namespace static_processing {
 
 	/* Static graph: Approximation by local sampling */
 	namespace local_sampling {
-		void algorithms::wedge_sampling(Graph& G) {
+		void algorithms::wedge_sampling(Graph& G, bool compressed) {
 			/*
 				Seshadhri, C., Ali Pinar, and Tamara G. Kolda.
 				"Wedge sampling for computing clustering coefficients and triangle counts on large graphs."

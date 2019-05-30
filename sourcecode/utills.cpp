@@ -102,4 +102,7 @@ namespace helper_functions {
 		}
 		return true;
 	}
+	long long choose2(int x) {
+		return ((long long)x * (x - 1)) >> 1;
+	}
 }

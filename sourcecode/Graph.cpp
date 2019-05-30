@@ -10,11 +10,20 @@ void Graph::read_from_file() {
 	print::statistics_table(this->n, this->m, this->maximum_degree);
 }
 
-int Graph::str_to_int(std::string& line) { std::stringstream aux; aux << line; int res; aux >> res; return res; }
-
-bool Graph::all_num(std::string &line) {
-	for (int i = 0; i < (int)line.size(); i++) if ((line[i] >= '0' && line[i] <= '9') == false) return false;
-	return true;
+void Graph::compress_graph() {
+	this->offset.resize(this->n + 1);
+	this->compressed_adj.clear();
+	int cur_offset = 0;
+	for (int src = 0; src < this->n; src ++) {
+		offset[src] = cur_offset;
+		for (auto& dist : this->get_adj_set(src)) {
+			compressed_adj.push_back(dist);
+		}
+		cur_offset += this->get_degree(src);
+		std::sort(compressed_adj.begin() + offset[src], compressed_adj.end());
+	}
+	assert((int)this->compressed_adj.size() == m);
+	this->offset[this->n] = m;
 }
 
 int Graph::get_vertex_index(long long vertex) {
@@ -92,11 +101,11 @@ void Graph::preprocessing() {
 		for (std::string z; ss >> z; vec_str.push_back(z));
 		if (((int)vec_str.size()) >= 2) {
 			bool is_all_num = true;
-			for (int i = 0; i < 2 ; i++) is_all_num &= this->all_num(vec_str[i]);
+			for (int i = 0; i < 2 ; i++) is_all_num &= helper_functions::is_int_num(vec_str[i]);
 			if (is_all_num) {
 
-				int vertex_left = str_to_int(vec_str[0]);
-				int vertex_right = str_to_int(vec_str[1]);
+				int vertex_left = helper_functions::to_int(vec_str[0]);
+				int vertex_right = helper_functions::to_int(vec_str[1]);
 
 				if (vertex_left == vertex_right)
 					continue;
@@ -123,8 +132,8 @@ void Graph::process_wedges() {
 	this->n_w = 0;
 	this->cum_wedges.clear();
 	for (auto& vertex : this->vertices) {
-		int deg = this->degree(vertex);
-		long long local_wedge = this->choose2(deg);
+		int deg = this->get_degree(vertex);
+		long long local_wedge = helper_functions::choose2(deg);
 		this->n_w += local_wedge;
 		this->cum_wedges.push_back(n_w);
 	}
@@ -132,14 +141,14 @@ void Graph::process_wedges() {
 
 std::vector<int> Graph::get_wedge(long long random_weight, int center) {
 	random_weight -= center == 0 ? 0 : this->cum_wedges[center - 1];
-	int lo = 0, hi = this->degree(center) - 1;
-	long long deg = this->degree(center);
+	int lo = 0, hi = this->get_degree(center) - 1;
+	long long deg = this->get_degree(center);
 	/*
 		TODO: Can we avoid binary search here by using Algorithm 1 of https://public.ca.sandia.gov/~tgkolda/pubs/bibtgkfiles/Triangles-arXiv-1202.5230v1.pdf
 	*/
 	while (lo < hi) {
 		int mid = (lo + hi) >> 1;
-		if ((mid + 1) * deg - this->choose2(mid + 1 + 1) < random_weight) {
+		if ((mid + 1) * deg - helper_functions::choose2(mid + 1 + 1) < random_weight) {
 			lo = mid + 1;
 		}
 		else {
@@ -148,7 +157,7 @@ std::vector<int> Graph::get_wedge(long long random_weight, int center) {
 	}
 
 	int wedge_head1 = this->adj_vec[center][lo];
-	random_weight -= lo == 0 ? 0 : lo * deg - this->choose2(lo + 1);
+	random_weight -= lo == 0 ? 0 : lo * deg - helper_functions::choose2(lo + 1);
 	int wedge_head2 = this->adj_vec[center][lo + random_weight]; 
 
 	std::vector<int> wedge = { wedge_head1, center, wedge_head2 };
@@ -171,7 +180,7 @@ void Graph::reindex(std::vector < std::pair< long long, int > > &weights) {
 	for (auto& v : this->vertices) {
 		std::vector<int>& adj = this->get_adj_vec(v);
 		std::sort(adj.begin(), adj.end());
-		this->maximum_degree = mmax(this->maximum_degree, this->degree(v));
+		this->maximum_degree = mmax(this->maximum_degree, this->get_degree(v));
 	}
 }
 
@@ -191,7 +200,7 @@ void Graph::reindex(std::vector < int > &ordered) {
 	for (auto& v : this->vertices) {
 		std::vector<int>& adj = this->get_adj_vec(v);
 		std::sort(adj.begin(), adj.end());
-		this->maximum_degree = mmax(this->maximum_degree, this->degree(v));
+		this->maximum_degree = mmax(this->maximum_degree, this->get_degree(v));
 	}
 }
 
@@ -207,7 +216,7 @@ void Graph::resize() {
 void Graph::sort_vertices_by_degree() {
 	this->degree_vertex_vec.clear();
 	for (auto& vertex : this->vertices) {
-		this->degree_vertex_vec.push_back(std::make_pair(this->degree(vertex), vertex));
+		this->degree_vertex_vec.push_back(std::make_pair(this->get_degree(vertex), vertex));
 	}
 	std::sort(this->degree_vertex_vec.begin(), this->degree_vertex_vec.end());
 	this->reindex(degree_vertex_vec);
@@ -218,7 +227,7 @@ void Graph::sort_vertices_by_wedges() {
 	for (auto& vertex : this->vertices) {
 		long long wedges = 0;
 		for (auto neighbor : this->adj_vec[vertex]) {
-			wedges += this->degree(neighbor) ; // indeed, we compare w(a) + d(a)
+			wedges += this->get_degree(neighbor) ; // indeed, we compare w(a) + d(a)
 		}
 		this->wedge_vertex_vec.push_back(std::make_pair(wedges, vertex));
 	}
@@ -230,8 +239,8 @@ void Graph::sort_vertices_by_degeneracy() {
 	std::vector< std::vector <int> > degree_bucket(this->maximum_degree + 1, std::vector<int>());
 	std::vector< int > vertex_degree(this->n);
 	for (auto& vertex : this->vertices) {
-		degree_bucket[this->degree(vertex)].push_back(vertex);
-		vertex_degree[vertex] = this->degree(vertex);
+		degree_bucket[this->get_degree(vertex)].push_back(vertex);
+		vertex_degree[vertex] = this->get_degree(vertex);
 	}
 
 	std::vector<bool> visited(this->n, false);

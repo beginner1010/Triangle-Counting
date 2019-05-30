@@ -29,8 +29,8 @@ namespace static_processing {
 			//	this->reset();
 			//}
 			/* Static graph: Approximation by one shot sampling */
-			void doulion(Graph& G, const double p);
-			void colorful_counting(Graph& G, const int n_color);
+			void doulion(Graph& G, const double p, bool compressed = false);
+			void colorful_counting(Graph& G, const int n_color, bool compressed = false);
 		};
 	}
 
@@ -41,7 +41,7 @@ namespace static_processing {
 			//	this->reset();
 			//}
 			/* Static graph: Approximation by local sampling */
-			void wedge_sampling(Graph& G);
+			void wedge_sampling(Graph& G, bool compressed = false);
 		};
 	}
 }
