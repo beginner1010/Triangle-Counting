@@ -23,14 +23,20 @@ namespace print {
 			std::cerr << "\r";
 			std::cerr << std::string(max_fancy_text_width, ' ');
 			std::cerr << "\r";
-			std::cerr << " The input graph is processed in " << cur_time << "(secs). See the statistics below:";
+			std::cerr << " The input graph is processed in " << cur_time << "(secs).";
 			std::cerr.flush();
 		}
 	}
+
+	void clear_line() {
+		std::cerr << "\r" << std::string(100, ' ');
+	}
+
 	void statistics_table(int n, int m, int maximum_degree) {
+		std::cerr << " See the statistics below :" << std::endl;
+		
 		int width = (5 * 2 - 1) + 12 + 15 + 10;
 		std::string hline = " " + std::string(width, '-');
-		std::cerr << std::endl;
 		std::cerr << hline << std::endl;
 		std::cerr << " |" << std::setw(12) << "#edges" << " |" << std::setw(15) << "#vertices" << " |" << std::setw(12) << "max degree" << " |" << std::endl;
 		std::cerr << hline << std::endl;

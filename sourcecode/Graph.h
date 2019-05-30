@@ -29,6 +29,9 @@ public:
 	inline int get_n_vertices() {
 		return this->n;
 	}
+	inline int get_maximum_degree() {
+		return this->maximum_degree;
+	}
 };
 
 class Graph : public base_graph {

@@ -7,7 +7,6 @@ Graph::~Graph() {}
 
 void Graph::read_from_file() {
 	this->preprocessing();
-	print::statistics_table(this->n, this->m, this->maximum_degree);
 }
 
 void Graph::compress_graph() {

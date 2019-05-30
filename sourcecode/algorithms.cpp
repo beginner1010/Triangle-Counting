@@ -15,7 +15,7 @@ namespace static_processing {
 					sampled_graph.add_new_edge(edge, false);
 				}
 			}
-			this->unnormalized_triangle_count = (double)counting::triangle::exact_edge_centeric_global_counting(sampled_graph);
+			this->unnormalized_triangle_count = (double)counting::triangle::exact_edge_centeric_global_counting(sampled_graph, compressed);
 			return;
 		}
 
@@ -37,7 +37,7 @@ namespace static_processing {
 					sampled_graph.add_new_edge(edge, false);
 				}
 			}
-			this->unnormalized_triangle_count = (double)counting::triangle::exact_edge_centeric_global_counting(sampled_graph);
+			this->unnormalized_triangle_count = (double)counting::triangle::exact_edge_centeric_global_counting(sampled_graph, compressed);
 			return;
 		}
 	}
@@ -57,7 +57,12 @@ namespace static_processing {
 			const std::vector<long long>& wedges = G.get_wedges();
 			const auto pair = this->weighted_sampling(wedges);
 			auto wedge = G.get_wedge(pair.second, pair.first);
-			this->unnormalized_triangle_count += G.get_adj_set(wedge[0]).find(wedge[2]) != G.get_adj_set(wedge[0]).end() ? 1.0 : 0.0; // check if wedge is closed (i.e. if it forms a triangle)
+			if (compressed == true) {
+				this->unnormalized_triangle_count += G.is_compressed_edge(wedge[0], wedge[1]) ? 1.0 : 0.0;
+			}
+			else {
+				this->unnormalized_triangle_count += G.get_adj_set(wedge[0]).find(wedge[2]) != G.get_adj_set(wedge[0]).end() ? 1.0 : 0.0; // check if wedge is closed (i.e. if it forms a triangle)
+			}
 			// unnormalized_triangle_count ???
 			return;
 		}

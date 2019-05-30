@@ -34,6 +34,8 @@ namespace settings {
 	extern std::string chosen_algo;
 	extern std::vector<std::string>::iterator itr;
 	void get_settings();
+	void clear_settings();
+	bool continue_run();
 }
 
 namespace helper_functions {

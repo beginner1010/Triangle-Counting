@@ -22,6 +22,7 @@ namespace IO {
 	extern std::string input_file_name;
 	extern FILE* fout;
 	extern FILE* fin;
+	void IO_addresses();
 	double get_file_size();
 	void create_folder();
 	bool check_if_file_exists();

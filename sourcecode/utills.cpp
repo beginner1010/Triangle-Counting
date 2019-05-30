@@ -22,6 +22,7 @@ namespace settings {
 	std::string chosen_algo;
 	std::vector<std::string>::iterator itr;
 	void get_settings() {
+		settings::clear_settings();
 		while (true) {
 			if (settings::chosen_algo != "") {
 				std::cerr << " The algorithm is not found!" << std::endl;
@@ -40,20 +41,9 @@ namespace settings {
 			}
 		}
 
-		do {
-			std::cerr << " Insert an input file (input graph) location:" << std::endl;
-			std::cerr << " >>> "; std::cin >> IO::input_file_name;
-#ifdef OFFICE_PC
-			IO::input_address = "input/in." + IO::input_file_name;
-#else // on Nova
-			IO::input_address = "/work/baskarg/vas/sbfly/in." + IO::input_file_name;
-#endif
-		} while (IO::check_if_file_exists() == false);
-
 		if (settings::chosen_algo != EXACT) {
 			std::cerr << " Insert #repeatition of the experiments:" << std::endl;
 			std::cerr << " >>> "; std::cin >> settings::exp_repeatition;
-
 		}
 
 		if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
@@ -78,6 +68,19 @@ namespace settings {
 			std::cerr << " >>> "; std::cin >> settings::snapshots;
 			assert(0 < settings::snapshots);
 		}
+	}
+
+	void clear_settings() {
+		max_time = -1;
+		exp_repeatition = -1;
+		chosen_algo = "";
+	}
+
+	bool continue_run() {
+		char command;
+		std::cerr << " Would you like to try with different algorithms/settings?(y/n)" << std::endl;
+		std::cerr << " >>> "; std::cin >> command;
+		return command == 'Y' || command == 'y';
 	}
 
 }

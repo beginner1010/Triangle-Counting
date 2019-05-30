@@ -7,10 +7,24 @@ namespace IO {
 	std::string input_file_name;
 	FILE* fout;
 	FILE* fin;
+
+	void IO_addresses() {
+		do {
+			std::cerr << " Insert an input file (input graph) location:" << std::endl;
+			std::cerr << " >>> "; std::cin >> IO::input_file_name;
+#ifdef OFFICE_PC
+			IO::input_address = "input/in." + IO::input_file_name;
+#else // on Nova
+			IO::input_address = "/work/baskarg/vas/sbfly/in." + IO::input_file_name;
+#endif
+		} while (IO::check_if_file_exists() == false);
+	}
+
 	double get_file_size() {
 		std::ifstream in(input_address.c_str(), std::ifstream::ate | std::ifstream::binary);
 		return (double)in.tellg();
 	}
+
 	void create_folder() {
 		std::string folder_name = constants::folder_algo_name[settings::chosen_algo];
 #ifdef _WIN32
