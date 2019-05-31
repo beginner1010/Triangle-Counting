@@ -5,10 +5,17 @@ namespace constants {
 		LOCAL_WEDGE_SAMPLING, STREAMING_TRIEST_BASE, STREAMING_TRIEST_IMPR, STREAMING_MASCOT_C, STREAMING_MASCOT };
 	std::unordered_map<std::string, std::string> folder_algo_name = 
 	{
-		{ EXACT, "exact" },{ ONE_SHOT_DOULION, "one_shot/doulion" },{ ONE_SHOT_COLORFUL, "one_shot/colorful" },
-		{ LOCAL_WEDGE_SAMPLING , "local_sampling/wedge_sampling" },{ STREAMING_TRIEST_BASE , "streaming/triest_base" },
-		{ STREAMING_TRIEST_IMPR, "streaming/impr" },{ STREAMING_MASCOT_C, "streaming/mascot_C" },
-		{ STREAMING_MASCOT, "streaming/mascot" }
+		{ EXACT, "exact" },{ ONE_SHOT_DOULION, "one_shot" },{ ONE_SHOT_COLORFUL, "one_shot" },
+		{ LOCAL_WEDGE_SAMPLING , "localsampling" },{ STREAMING_TRIEST_BASE , "streaming" },
+		{ STREAMING_TRIEST_IMPR, "streaming" },{ STREAMING_MASCOT_C, "streaming" },
+		{ STREAMING_MASCOT, "streaming" }
+	};
+	std::unordered_map<std::string, std::string> suffix_output_address =
+	{
+		{ EXACT, "exact" },{ ONE_SHOT_DOULION, "doulion" },{ ONE_SHOT_COLORFUL, "colorful" },
+		{ LOCAL_WEDGE_SAMPLING , "wedge" },{ STREAMING_TRIEST_BASE , "triest_base" },
+		{ STREAMING_TRIEST_IMPR, "impr" },{ STREAMING_MASCOT_C, "mascot_C" },
+		{ STREAMING_MASCOT, "mascot" }
 	};
 }
 
@@ -18,6 +25,7 @@ namespace settings {
 	int exp_repeatition = -1;
 	int n_colors;
 	double p;
+	bool compressed = false;
 	int reservoir_size;
 	std::string chosen_algo;
 	std::vector<std::string>::iterator itr;
@@ -39,6 +47,11 @@ namespace settings {
 				settings::chosen_algo = constants::algorithm_names[idx - 1];
 				break;
 			}
+		}
+
+		if ((std::unordered_set<std::string>({ EXACT,  ONE_SHOT_DOULION, ONE_SHOT_COLORFUL, LOCAL_WEDGE_SAMPLING })).count(settings::chosen_algo) > 0) {
+			std::cerr << " Run experiments on COO (compressed) version of graph ? (y/n)" << std::endl;
+			compressed = helper_functions::yesno_query();
 		}
 
 		if (settings::chosen_algo != EXACT) {
@@ -77,10 +90,8 @@ namespace settings {
 	}
 
 	bool continue_run() {
-		char command;
-		std::cerr << " Would you like to try with different algorithms/settings?(y/n)" << std::endl;
-		std::cerr << " >>> "; std::cin >> command;
-		return command == 'Y' || command == 'y';
+		std::cerr << " Would you like to try experiments for the same graph but different algorithms/settings?(y/n)" << std::endl;
+		return helper_functions::yesno_query();
 	}
 
 }
@@ -107,5 +118,10 @@ namespace helper_functions {
 	}
 	long long choose2(int x) {
 		return ((long long)x * (x - 1)) >> 1;
+	}
+	bool yesno_query() {
+		std::string command;
+		std::cerr << " >>> "; std::cin >> command;
+		return command[0] == 'Y' || command[0] == 'y';
 	}
 }

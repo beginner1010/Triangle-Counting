@@ -22,6 +22,7 @@
 namespace constants {
 	extern std::vector<std::string> algorithm_names;
 	extern std::unordered_map<std::string, std::string> folder_algo_name;
+	extern std::unordered_map<std::string, std::string> suffix_output_address;
 }
 
 namespace settings {
@@ -30,6 +31,7 @@ namespace settings {
 	extern int exp_repeatition;
 	extern int n_colors;
 	extern double p;
+	extern bool compressed;
 	extern int reservoir_size;
 	extern std::string chosen_algo;
 	extern std::vector<std::string>::iterator itr;
@@ -43,4 +45,5 @@ namespace helper_functions {
 	int to_int(const std::string& str);
 	bool is_int_num(const std::string& str);
 	long long choose2(int x);
+	bool yesno_query();
 }

@@ -10,19 +10,31 @@ void Graph::read_from_file() {
 }
 
 void Graph::compress_graph() {
-	this->offset.resize(this->n + 1);
-	this->compressed_adj.clear();
-	int cur_offset = 0;
-	for (int src = 0; src < this->n; src ++) {
-		offset[src] = cur_offset;
-		for (auto& dist : this->get_adj_set(src)) {
-			compressed_adj.push_back(dist);
+	if (this->offset.empty() == true) {
+		this->offset.resize(this->n + 1);
+		this->compressed_adj.clear();
+		int cur_offset = 0;
+		double cur_time = 0;
+		double last_print_time = -1000;
+		int n_dots = 0;
+		for (int src = 0; src < this->n; src++) {
+			clock_t start_time = clock();
+			offset[src] = cur_offset;
+			for (auto& dist : this->get_adj_set(src)) {
+				compressed_adj.push_back(dist);
+			}
+			cur_offset += this->get_degree(src);
+			std::sort(compressed_adj.begin() + offset[src], compressed_adj.end());
+			cur_time += ((double)clock() - start_time) / CLOCKS_PER_SEC;
+			print::message_with_dots(last_print_time, n_dots, cur_time, this->n, src + 1, "Compressing graph");
 		}
-		cur_offset += this->get_degree(src);
-		std::sort(compressed_adj.begin() + offset[src], compressed_adj.end());
+		print::clear_line();
+		print::finished_work(cur_time, "The input graph is compressed");
+		assert((int)this->compressed_adj.size() == 2 * this->m);
+		this->offset[this->n] = 2 * this->m;
+	} else {
+		std::cerr << " The input graph is already compressed." << std::endl;
 	}
-	assert((int)this->compressed_adj.size() == m);
-	this->offset[this->n] = m;
 }
 
 int Graph::get_vertex_index(long long vertex) {
@@ -39,10 +51,12 @@ int Graph::get_vertex_index(long long vertex) {
 
 void Graph::update_adj(const int &vertex_left, const int& vertex_right, const int mode, const bool use_vec) {
 	if (mode == -1) {
+		this->m--;
 		this->adj_set[vertex_left].erase(vertex_right);
 		this->adj_set[vertex_right].erase(vertex_left);
 	}
 	else { // mode is +1
+		this->m++;
 		this->adj_set[vertex_left].insert(vertex_right);
 		this->adj_set[vertex_right].insert(vertex_left);
 		if (use_vec == true) {
@@ -60,7 +74,6 @@ void Graph::update_adj(const std::pair<int, int>& edge, const int mode, const bo
 }
 
 void Graph::add_new_edge(const int& vertex_left, const int& vertex_right, const bool use_vec) {
-	this->m++;
 	this->edges.push_back(std::make_pair(vertex_left, vertex_right));
 	this->update_adj(vertex_left, vertex_right, +1, use_vec);
 }
@@ -81,8 +94,9 @@ void Graph::preprocessing() {
 	std::ios::sync_with_stdio(false);
 	
 	std::unordered_set < long long > seen_edges;
-	double last_printed_dot = -1000;
+	double last_print_time = -1000;
 	double cur_time = 0;
+	int n_dots = 0;
 	double total_work = (double)IO::get_file_size();
 	double done_work = 0;
 	char char_line[1024];
@@ -91,7 +105,7 @@ void Graph::preprocessing() {
 		std::string line = std::string(char_line);
 		done_work += (double)line.size();
 
-		print::reading_graph_fancy_text(false, last_printed_dot, this->max_fancy_text_width, this->n_dots, cur_time, total_work, done_work);
+		print::message_with_dots(last_print_time, n_dots, cur_time, total_work, done_work, "Reading graph");
 		line_number++;
 
 		clock_t start_time = clock();
@@ -112,7 +126,8 @@ void Graph::preprocessing() {
 				vertex_left = this->get_vertex_index(vertex_left);
 				vertex_right = this->get_vertex_index(vertex_right);
 
-				if (seen_edges.find(this->encode_edge(vertex_left, vertex_right)) != seen_edges.end())
+				if (seen_edges.find(this->encode_edge(vertex_left, vertex_right)) != seen_edges.end()
+					|| seen_edges.find(this->encode_edge(vertex_right, vertex_left)) != seen_edges.end())
 					continue;
 
 				seen_edges.insert(this->encode_edge(vertex_left, vertex_right));
@@ -124,7 +139,8 @@ void Graph::preprocessing() {
 		clock_t end_time = clock();
 		cur_time += ((double)end_time - start_time) / CLOCKS_PER_SEC;
 	}
-	print::reading_graph_fancy_text(true, last_printed_dot, this->max_fancy_text_width, this->n_dots, cur_time, total_work, done_work);
+	print::clear_line();
+	print::finished_work(cur_time, "The input graph is read");
 }
 
 void Graph::process_wedges() {
@@ -278,11 +294,8 @@ void Graph::clear() {
 	this->vertex_index.clear();
 	this->m = 0;
 	this->n = 0;
-	this->n_z = -1;
-	this->n_w = -1;
-	this->n_centered_z = -1;
-	this->n_centered_w = -1;
+	this->n_z = 0;
+	this->n_w = 0;
 	this->maximum_degree = 0;
-	this->n_dots = 0;
 	this->line_number = 0;
 }

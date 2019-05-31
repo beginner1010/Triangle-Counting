@@ -33,14 +33,14 @@ namespace IO {
 		::_mkdir(("./output/" + IO::input_file_name + "/" + folder_name).c_str());
 #else
 		::mkdir("./output", 0777);
-		::mkdir(("./output/" + IO::input_address).c_str(), 0777);
-		::mkdir(("./output/" + IO::input_address + "/" + folder_name).c_str(), 0777);
+		::mkdir(("./output/" + IO::input_file_name).c_str(), 0777);
+		::mkdir(("./output/" + IO::input_file_name + "/" + folder_name).c_str(), 0777);
 #endif
 		std::string file_name = "";
-		file_name += settings::max_time == -1.0 ? "" : "t=" + helper_functions::to_str((int)settings::max_time);
+		file_name += settings::max_time == -1.0 ? "" : "t=" + helper_functions::to_str((int)(settings::max_time + 1e-6));
 		file_name += settings::exp_repeatition == -1 ? "" : "rep=" + helper_functions::to_str(settings::exp_repeatition);
-		file_name = folder_name == "exact" ? "exact" : file_name;
-		IO::output_address = "output/" + IO::input_file_name + "/" + folder_name + "/" + file_name + ".txt";
+		file_name = constants::suffix_output_address[settings::chosen_algo] + (file_name != "" ? "_" : "") + file_name;
+		IO::output_address = "output/" + IO::input_file_name + "/" + folder_name + "/" + file_name + (settings::compressed ? "_coo" : "") + ".txt";
 		return;
 	}
 

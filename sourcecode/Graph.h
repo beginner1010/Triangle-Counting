@@ -1,7 +1,7 @@
 #pragma once
 #include "utills.h"
 #include "IO.h"
-#include "fancy_printing.h"
+#include "printing.h"
 
 #include <iostream>
 #include <vector>
@@ -22,6 +22,7 @@ protected:
 	int m;
 	int n;
 	int maximum_degree;
+	long long n_w;
 public:
 	inline int get_n_edges() {
 		return this->m;
@@ -31,6 +32,9 @@ public:
 	}
 	inline int get_maximum_degree() {
 		return this->maximum_degree;
+	}
+	inline long long get_n_wedges() {
+		return this->n_w;
 	}
 };
 
@@ -47,8 +51,6 @@ public:
 		this->n = other.n;
 		this->n_z = other.n_z; 
 		this->n_w = other.n_w;
-		this->n_centered_z = other.n_centered_z;
-		this->n_centered_w = other.n_centered_w;
 		this->maximum_degree = other.maximum_degree;
 		return *this;
 	}
@@ -108,6 +110,8 @@ public:
 		return this->compressed_adj[idx];
 	}
 
+	void process_wedges();
+
 	int get_vertex_index(long long vertex);
 	std::vector<int> get_wedge(long long random_weight, int center);
 
@@ -131,16 +135,8 @@ private:
 	std::vector <int> offset;
 	std::vector <int> compressed_adj;
 
-	const int text_interval = 100000;
-	const int max_fancy_text_width = 60;
-	int n_dots;
 	int line_number;
 	long long n_z; 
-	long long n_w;
-	long long n_centered_z;
-	long long n_centered_w;
-
-	void process_wedges();
 
 	void reindex(std::vector < std::pair< long long, int > >& weights);
 	void reindex(std::vector < int > &ordered);
@@ -152,7 +148,7 @@ private:
 	void update_adj(const std::pair<int, int>& edge, const int mode, const bool use_vec = true);
 
 
-	inline long long encode_edge(int& vertex_left, int& vertex_right) {
+	inline long long encode_edge(const int& vertex_left, const int& vertex_right) {
 		return vertex_left * SHIFT + vertex_right;
 	}
 	inline std::pair<int, int> decode_edge(long long& hash_value) {
