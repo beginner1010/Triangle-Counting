@@ -9,7 +9,7 @@ void Graph::read_from_file() {
 	this->preprocessing();
 }
 
-void Graph::compress_graph() {
+void Graph::compress_graph(bool log) {
 	if (this->offset.empty() == true) {
 		this->offset.resize(this->n + 1);
 		this->compressed_adj.clear();
@@ -26,14 +26,18 @@ void Graph::compress_graph() {
 			cur_offset += this->get_degree(src);
 			std::sort(compressed_adj.begin() + offset[src], compressed_adj.end());
 			cur_time += ((double)clock() - start_time) / CLOCKS_PER_SEC;
-			print::message_with_dots(last_print_time, n_dots, cur_time, this->n, src + 1, "Compressing graph");
+			if (log == true)
+				print::message_with_dots(last_print_time, n_dots, cur_time, this->n, src + 1, "Compressing graph");
 		}
-		print::clear_line();
-		print::finished_work(cur_time, "The input graph is compressed");
+		if (log == true) {
+			print::clear_line();
+			print::finished_work(cur_time, "The input graph is compressed");
+		}
 		assert((int)this->compressed_adj.size() == 2 * this->m);
 		this->offset[this->n] = 2 * this->m;
 	} else {
-		std::cerr << " The input graph is already compressed." << std::endl;
+		if (log == true) 
+			std::cerr << " The input graph is already compressed." << std::endl;
 	}
 }
 
@@ -65,6 +69,10 @@ void Graph::update_adj(const int &vertex_left, const int& vertex_right, const in
 			*/
 			this->adj_vec[vertex_left].push_back(vertex_right);
 			this->adj_vec[vertex_right].push_back(vertex_left);
+			/*
+				Since no order is specified, we set this boolean variable False.
+			*/
+			this->is_sorted_vectors = false;
 		}
 	}
 }
@@ -154,10 +162,21 @@ void Graph::process_wedges() {
 	}
 }
 
-std::vector<int> Graph::get_wedge(long long random_weight, int center) {
+void Graph::process_ordered_wedges() {
+	this->n_w = 0;
+	this->cum_wedges.clear();
+	for (auto& vertex : this->vertices) {
+		int deg = this->get_ordered_degree(vertex);
+		long long local_wedge = helper_functions::choose2(deg);
+		this->n_w += local_wedge;
+		this->cum_wedges.push_back(n_w);
+	}
+}
+
+std::vector<int> Graph::get_wedge(long long random_weight, int center, std::vector<int>& neighbors_of_center) {
 	random_weight -= center == 0 ? 0 : this->cum_wedges[center - 1];
-	int lo = 0, hi = this->get_degree(center) - 1;
-	long long deg = this->get_degree(center);
+	int lo = 0, hi = (int)neighbors_of_center.size() - 1;
+	long long deg = (int)neighbors_of_center.size();
 	/*
 		TODO: Can we avoid binary search here by using Algorithm 1 of https://public.ca.sandia.gov/~tgkolda/pubs/bibtgkfiles/Triangles-arXiv-1202.5230v1.pdf
 	*/
@@ -171,9 +190,9 @@ std::vector<int> Graph::get_wedge(long long random_weight, int center) {
 		}
 	}
 
-	int wedge_head1 = this->adj_vec[center][lo];
+	int wedge_head1 = neighbors_of_center[lo];
 	random_weight -= lo == 0 ? 0 : lo * deg - helper_functions::choose2(lo + 1);
-	int wedge_head2 = this->adj_vec[center][lo + random_weight]; 
+	int wedge_head2 = neighbors_of_center[lo + random_weight];
 
 	std::vector<int> wedge = { wedge_head1, center, wedge_head2 };
 	return wedge;
@@ -183,8 +202,8 @@ void Graph::reindex(std::vector < std::pair< long long, int > > &weights) {
 	std::vector <int> aux_rank = std::vector <int>(this->n);
 	for (int i = 0; i < this->n; i++)
 		aux_rank[weights[i].second] = i;
-	std::vector < std::pair<int, int> > aux_edges = this->edges;
 
+	std::vector < std::pair<int, int> > aux_edges = this->edges;
 	this->resize();
 	// we do not update left_vertices, right_vertices (we don't use them. Should we update them?)
 	for (auto& aux_edge : aux_edges) {
@@ -200,23 +219,30 @@ void Graph::reindex(std::vector < std::pair< long long, int > > &weights) {
 }
 
 void Graph::reindex(std::vector < int > &ordered) {
-	std::vector <int> aux_rank = std::vector <int>(this->n);
+	std::vector <int> vertex_rank = std::vector <int>(this->n);
 	for (int i = 0; i < this->n; i++)
-		aux_rank[ordered[i]] = i;
+		vertex_rank[ordered[i]] = i;
 
-	std::vector < std::pair<int, int> > aux_edges = this->edges;
-	this->resize();
-	// we do not update left_vertices, right_vertices (we don't use them. Should we update them?)
-	for (auto& aux_edge : aux_edges) {
-		int& a = aux_rank[aux_edge.first];
-		int& b = aux_rank[aux_edge.second];
-		this->add_new_edge(a, b, true);
+	this->resize_ordered_adj();
+	for (auto& edge : this->edges) {
+		int& a = edge.first;
+		int& b = edge.second;
+		if (vertex_rank[a] > vertex_rank[b]) {
+			this->ordered_adj_vec[b].push_back(a);
+			this->ordered_adj_set[b].insert(a);
+		}
+		else {
+			this->ordered_adj_vec[a].push_back(b);
+			this->ordered_adj_set[a].insert(b);
+		}
 	}
-	for (auto& v : this->vertices) {
-		std::vector<int>& adj = this->get_adj_vec(v);
-		std::sort(adj.begin(), adj.end());
-		this->maximum_degree = mmax(this->maximum_degree, this->get_degree(v));
-	}
+}
+
+void Graph::resize_ordered_adj() {
+	this->ordered_adj_vec.clear();
+	this->ordered_adj_vec.resize(this->n);
+	this->ordered_adj_set.clear();
+	this->ordered_adj_set.resize(this->n);
 }
 
 void Graph::resize() {
@@ -226,6 +252,15 @@ void Graph::resize() {
 	this->adj_set.resize(this->n);
 	this->edges.clear();
 	this->m = 0;
+}
+
+void Graph::sort_adj_vectors_by_ids() {
+	if (this->is_sorted_vectors == true)
+		return;
+	this->is_sorted_vectors = true;
+	for (auto& vertex : this->vertices) {
+		std::sort(this->adj_vec[vertex].begin(), this->adj_vec[vertex].end());
+	}
 }
 
 void Graph::sort_vertices_by_degree() {
@@ -298,4 +333,5 @@ void Graph::clear() {
 	this->n_w = 0;
 	this->maximum_degree = 0;
 	this->line_number = 0;
+	this->is_sorted_vectors = false;
 }

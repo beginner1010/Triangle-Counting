@@ -22,7 +22,7 @@ int main() {
 		IO::create_folder();
 
 		if (settings::compressed == true) {
-			graph.compress_graph();
+			graph.compress_graph(true);
 		}
 
 		print::statistics_table(graph.get_n_vertices(), graph.get_n_edges(), graph.get_maximum_degree());
@@ -35,52 +35,38 @@ int main() {
 		IO::fout = fopen(IO::output_address.c_str(), "w");
 		print::print_header();
 		if (settings::chosen_algo == EXACT) {
+			exact_algo->reset();
 			exact_algo->edge_centric_exact_algorithm(graph);
 			auto global_triangle_count = exact_algo->get_unnormalized_count(); // unnormalized count in this case is indeed a normalized one since the counter is exact.
-			print::print_result({global_triangle_count, static_local_samp_algo->get_runtime()});
+			print::print_result({global_triangle_count, exact_algo->get_runtime()});
 		}
 		else {
 			for (int iter_exp = 1; iter_exp <= settings::exp_repeatition; iter_exp++) {
-				if (settings::chosen_algo == ONE_SHOT_DOULION) {
+				if (settings::is_one_shot_algorithm() == true) {
 					static_one_shot_algo->reset();
 					print::clear_line();
 					print::done_experiments(iter_exp);
-					static_one_shot_algo->doulion(graph, settings::p);
-					double unnormalized = static_one_shot_algo->get_unnormalized_count();
-					double global_triangle_count = utill::normalized(unnormalized, 1. / (settings::p * settings::p * settings::p));
-					print::print_result({(double)iter_exp, global_triangle_count, static_one_shot_algo->get_runtime()});
+					static_one_shot_algo->run(graph);
+					print::print_result(static_one_shot_algo->get_results(iter_exp));
 
-				} else if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
-					static_one_shot_algo->reset();
-					print::clear_line();
-					print::done_experiments(iter_exp);
-					static_one_shot_algo->colorful_counting(graph, settings::n_colors);
-					double unnormalized = static_one_shot_algo->get_unnormalized_count();
-					double global_triangle_count = utill::normalized(unnormalized, settings::n_colors * settings::n_colors);
-					print::print_result({ (double)iter_exp, global_triangle_count, static_one_shot_algo->get_runtime() });
-
-				} else if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
-					if (iter_exp == 1)
-						graph.process_wedges();
-					static_local_samp_algo->reset();
-					static_local_samp_algo->setup();
-					while (static_local_samp_algo->get_runtime() <= settings::max_time) {
-						static_local_samp_algo->wedge_sampling(graph);
+				} else if (settings::is_local_sampling_algorithm() == true) {
+					static_local_samp_algo->setup(iter_exp, graph);
+					double tolerance = settings::max_time / settings::snapshots - 1e-6;
+					while (static_local_samp_algo->get_runtime() <= settings::max_time + tolerance) {
+						static_local_samp_algo->run(graph);
 						if (static_local_samp_algo->should_print(static_local_samp_algo->get_runtime())) {
 							static_local_samp_algo->update_last_time_printed(static_local_samp_algo->get_runtime());
-							double unnormalized = static_local_samp_algo->get_unnormalized_count();
- 							double global_triangle_count = utill::normalized(unnormalized, (double)graph.get_n_wedges() / static_local_samp_algo->get_n_sampled() / 3.0);
-							print::print_result({ (double)iter_exp, (double)static_local_samp_algo->get_n_sampled(), global_triangle_count, static_local_samp_algo->get_runtime() });
+							print::print_result(static_local_samp_algo->get_results(iter_exp, graph));
 							print::clear_line();
 							print::done_experiments(iter_exp);
-							print::done_work_percentage(static_local_samp_algo->get_runtime(), settings::max_time, "wedge sampling");
+							print::done_work_percentage(static_local_samp_algo->get_runtime(), settings::max_time, "local sampling");
 						}
 					}
 				}
 			}
 		}
-		std::cerr << std::endl;
-		std::cerr << "\r The experiment is finished. Look at for results: " << IO::output_address << std::endl << std::endl;
+		print::clear_line();
+		std::cerr << " The experiment is finished. Look at for results: " << IO::output_address << std::endl << std::endl;
 		run = settings::continue_run();
 	}
 

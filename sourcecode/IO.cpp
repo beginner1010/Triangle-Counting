@@ -1,6 +1,5 @@
 #include "IO.h"
 
-
 namespace IO {
 	std::string input_address;
 	std::string output_address;
@@ -9,15 +8,27 @@ namespace IO {
 	FILE* fin;
 
 	void IO_addresses() {
+		int mode = 3;
 		do {
 			std::cerr << " Insert an input file (input graph) location:" << std::endl;
 			std::cerr << " >>> "; std::cin >> IO::input_file_name;
-#ifdef OFFICE_PC
-			IO::input_address = "input/in." + IO::input_file_name;
-#else // on Nova
+
 			IO::input_address = "/work/baskarg/vas/sbfly/in." + IO::input_file_name;
-#endif
-		} while (IO::check_if_file_exists() == false);
+			if (IO::check_if_file_exists(false)) {
+				mode = 1; // to make it easy to get input file address easier on Nova Cluster
+				break;
+			}
+			IO::input_address = "input/in." + IO::input_file_name;
+			if (IO::check_if_file_exists(false)) { // to make it easy to get input file address easier on PC Office
+				mode = 2;
+				break;
+			}
+			IO::input_address = IO::input_file_name;
+		} while (IO::check_if_file_exists(true) == false);
+
+		if (mode == 3) { // the complete address is given
+			IO::guess_input_file_name();
+		}
 	}
 
 	double get_file_size() {
@@ -36,20 +47,49 @@ namespace IO {
 		::mkdir(("./output/" + IO::input_file_name).c_str(), 0777);
 		::mkdir(("./output/" + IO::input_file_name + "/" + folder_name).c_str(), 0777);
 #endif
+		char buffer[1024];
 		std::string file_name = "";
-		file_name += settings::max_time == -1.0 ? "" : "t=" + helper_functions::to_str((int)(settings::max_time + 1e-6));
 		file_name += settings::exp_repeatition == -1 ? "" : "rep=" + helper_functions::to_str(settings::exp_repeatition);
+		if (settings::chosen_algo == ONE_SHOT_DOULION) {
+			sprintf(buffer, "_p=%g", settings::p);
+			file_name += std::string(buffer);
+		}
+		else if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
+			sprintf(buffer, "_nclr=%d", settings::n_colors);
+			file_name += std::string(buffer);
+		}
+		else if (settings::chosen_algo == ONE_SHOT_EDGE_WEDGE_SAMPLING) {
+			sprintf(buffer, "_p=%g", settings::p);
+			file_name += std::string(buffer);
+		}
+		else if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
+			sprintf(buffer, "_mxtime=%d", (int)(settings::max_time + 1e-6));
+			file_name += std::string(buffer);
+		}
 		file_name = constants::suffix_output_address[settings::chosen_algo] + (file_name != "" ? "_" : "") + file_name;
 		IO::output_address = "output/" + IO::input_file_name + "/" + folder_name + "/" + file_name + (settings::compressed ? "_coo" : "") + ".txt";
 		return;
 	}
 
-	bool check_if_file_exists() {
+	bool check_if_file_exists(bool log) {
 		if (access(IO::input_address.c_str(), 0) != 0) {
-			std::cerr << " No such file exists!" << std::endl;
+			if (log == true) 
+				std::cerr << " No such file exists!" << std::endl;
 			return false;
 		}
 		return true;
+	}
+
+	void guess_input_file_name() {
+		std::string file_name = "";
+		for (int i = (int)IO::input_address.size() - 1; i >= 0; i--) {
+			if (std::string("./\\").find(IO::input_address[i]) != std::string::npos) {
+				break;
+			}
+			file_name += IO::input_address[i];
+		}
+		std::reverse(file_name.begin(), file_name.end());
+		IO::input_file_name = file_name;
 	}
  
 }

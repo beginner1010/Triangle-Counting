@@ -1,21 +1,25 @@
 #include "utills.h"
 
+
 namespace constants {
-	std::vector<std::string> algorithm_names = { EXACT, ONE_SHOT_DOULION, ONE_SHOT_COLORFUL,
-		LOCAL_WEDGE_SAMPLING, STREAMING_TRIEST_BASE, STREAMING_TRIEST_IMPR, STREAMING_MASCOT_C, STREAMING_MASCOT };
+	std::vector<std::string> algorithm_names = { 
+		EXACT, ONE_SHOT_DOULION, 
+		ONE_SHOT_COLORFUL, ONE_SHOT_EDGE_WEDGE_SAMPLING,
+		LOCAL_WEDGE_SAMPLING, LOCAL_REVISITED_WEDGE_SAMPLING, 
+		STREAMING_TRIEST_BASE, STREAMING_TRIEST_IMPR, STREAMING_MASCOT_C, STREAMING_MASCOT };
 	std::unordered_map<std::string, std::string> folder_algo_name = 
 	{
-		{ EXACT, "exact" },{ ONE_SHOT_DOULION, "one_shot" },{ ONE_SHOT_COLORFUL, "one_shot" },
-		{ LOCAL_WEDGE_SAMPLING , "localsampling" },{ STREAMING_TRIEST_BASE , "streaming" },
-		{ STREAMING_TRIEST_IMPR, "streaming" },{ STREAMING_MASCOT_C, "streaming" },
-		{ STREAMING_MASCOT, "streaming" }
+		{ EXACT, "exact" },
+		{ ONE_SHOT_DOULION, "one_shot" },{ ONE_SHOT_COLORFUL, "one_shot" },	{ONE_SHOT_EDGE_WEDGE_SAMPLING, "one_shot"},
+		{ LOCAL_WEDGE_SAMPLING , "local_sampling" }, { LOCAL_REVISITED_WEDGE_SAMPLING , "local_sampling"},
+		{ STREAMING_TRIEST_BASE , "streaming" }, { STREAMING_TRIEST_IMPR, "streaming" }, { STREAMING_MASCOT_C, "streaming" }, { STREAMING_MASCOT, "streaming" }
 	};
 	std::unordered_map<std::string, std::string> suffix_output_address =
 	{
-		{ EXACT, "exact" },{ ONE_SHOT_DOULION, "doulion" },{ ONE_SHOT_COLORFUL, "colorful" },
-		{ LOCAL_WEDGE_SAMPLING , "wedge" },{ STREAMING_TRIEST_BASE , "triest_base" },
-		{ STREAMING_TRIEST_IMPR, "impr" },{ STREAMING_MASCOT_C, "mascot_C" },
-		{ STREAMING_MASCOT, "mascot" }
+		{ EXACT, "exact" },
+		{ ONE_SHOT_DOULION, "doulion" },{ ONE_SHOT_COLORFUL, "colorful" }, {ONE_SHOT_EDGE_WEDGE_SAMPLING, "ewsamp"},
+		{ LOCAL_WEDGE_SAMPLING , "wedge" }, { LOCAL_REVISITED_WEDGE_SAMPLING , "revisited_wedge"},
+		{ STREAMING_TRIEST_BASE , "triest_base" },{ STREAMING_TRIEST_IMPR, "impr" },{ STREAMING_MASCOT_C, "mascot_C" },	{ STREAMING_MASCOT, "mascot" }
 	};
 }
 
@@ -49,17 +53,17 @@ namespace settings {
 			}
 		}
 
-		if ((std::unordered_set<std::string>({ EXACT,  ONE_SHOT_DOULION, ONE_SHOT_COLORFUL, LOCAL_WEDGE_SAMPLING })).count(settings::chosen_algo) > 0) {
+		if (settings::is_streaming_algorithm() == false) {
 			std::cerr << " Run experiments on COO (compressed) version of graph ? (y/n)" << std::endl;
 			compressed = helper_functions::yesno_query();
 		}
 
-		if (settings::chosen_algo != EXACT) {
+		if (settings::is_exact_algorithm() == false) {
 			std::cerr << " Insert #repeatition of the experiments:" << std::endl;
 			std::cerr << " >>> "; std::cin >> settings::exp_repeatition;
 		}
 
-		if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
+		if (settings::is_local_sampling_algorithm() == true) {
 			std::cerr << " Insert the execution time (in seconds):" << std::endl;
 			std::cerr << " >>> "; std::cin >> settings::max_time;
 		}
@@ -70,17 +74,33 @@ namespace settings {
 			assert(settings::n_colors > 1);
 		}
 
-		if ((std::unordered_set<std::string>({ ONE_SHOT_DOULION, STREAMING_MASCOT_C, STREAMING_MASCOT })).count(settings::chosen_algo) > 0) {
+		if ((std::unordered_set<std::string>({ ONE_SHOT_DOULION, ONE_SHOT_EDGE_WEDGE_SAMPLING, STREAMING_MASCOT_C, STREAMING_MASCOT })).count(settings::chosen_algo) > 0) {
 			std::cerr << " Insert the sampling probability:" << std::endl;
 			std::cerr << " >>> "; std::cin >> settings::p;
 			assert(0.0 < settings::p && settings::p <= 1.0);
 		}
 
-		if (settings::chosen_algo != EXACT) {
+		if (settings::is_local_sampling_algorithm() == true) {
 			std::cerr << " Insert # snapshots (# lines in output):" << std::endl;
 			std::cerr << " >>> "; std::cin >> settings::snapshots;
 			assert(0 < settings::snapshots);
 		}
+	}
+
+	bool is_exact_algorithm() {
+		return std::unordered_set<std::string>({ EXACT }).count(settings::chosen_algo) > 0;
+	}
+
+	bool is_one_shot_algorithm() {
+		return std::unordered_set<std::string>({ ONE_SHOT_DOULION, ONE_SHOT_COLORFUL, ONE_SHOT_EDGE_WEDGE_SAMPLING }).count(settings::chosen_algo) > 0;
+	}
+
+	bool is_local_sampling_algorithm() {
+		return std::unordered_set<std::string>({ LOCAL_WEDGE_SAMPLING, LOCAL_REVISITED_WEDGE_SAMPLING }).count(settings::chosen_algo) > 0;
+	}
+
+	bool is_streaming_algorithm() {
+		return std::unordered_set<std::string>({ STREAMING_MASCOT, STREAMING_MASCOT_C, STREAMING_TRIEST_BASE, STREAMING_TRIEST_IMPR }).count(settings::chosen_algo) > 0;
 	}
 
 	void clear_settings() {

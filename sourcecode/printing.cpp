@@ -6,7 +6,7 @@ namespace print {
 	}
 
 	void done_work_percentage(double done_work, double total_work, std::string text) {
-		fprintf(stderr, "\t[%7.3f%% of %s is done]", ((double)done_work / total_work * 100), text.c_str());
+		fprintf(stderr, "\t[%7.3f%% of %s is done]", mmin(100.0, ((double)done_work / total_work * 100)), text.c_str());
 	}
 
 	void print_dots(int& n_dots) {
@@ -22,7 +22,7 @@ namespace print {
 			clear_line();
 			std::cerr << " " << text ;
 			print_dots(n_dots);
-			done_work_percentage(done_work, total_work, "reading input graph");
+			done_work_percentage(done_work, total_work, text);
 			std::cerr.flush();
 			last_print_time = cur_time;
 		}
@@ -60,8 +60,14 @@ namespace print {
 		else if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
 			fprintf(IO::fout, "itr, algo, n_colors, bfly, time");
 		} 
+		else if (settings::chosen_algo == ONE_SHOT_EDGE_WEDGE_SAMPLING) {
+			fprintf(IO::fout, "itr, algo, prob, bfly, time");
+		}
 		else if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
-			fprintf(IO::fout, "itr, algo, #sampled wedge, bfly, time");
+			fprintf(IO::fout, "itr, algo, preproc time, #sampled wedge, bfly, time");
+		}
+		else if (settings::chosen_algo == LOCAL_REVISITED_WEDGE_SAMPLING) {
+			fprintf(IO::fout, "itr, algo, preproc time, #sampled wedge, bfly, time");
 		}
 		fprintf(IO::fout, "\n");
 		std::fflush(IO::fout);
@@ -77,8 +83,14 @@ namespace print {
 		else if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
 			fprintf(IO::fout, "%d, Colorful, %d, %.2f, %.4f", (int)(res[0] + 1e-6), settings::n_colors, res[1], res[2]);
 		}
+		else if (settings::chosen_algo == ONE_SHOT_EDGE_WEDGE_SAMPLING) {
+			fprintf(IO::fout, "%d, EWSamp, %.2f, %.2f, %.4f", (int)(res[0] + 1e-6), settings::p, res[1], res[2]);
+		}
 		else if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
-			fprintf(IO::fout, "%d, Wedge Samp, %d, %.2f, %.4f", (int)(res[0] + 1e-6), (int)(res[1] + 1e-6), res[2], res[3]);
+			fprintf(IO::fout, "%d, Wedge Samp, %.2f, %d, %.2f, %.4f", (int)(res[0] + 1e-6), res[1], (int)(res[2] + 1e-6), res[3], res[4]);
+		}
+		else if (settings::chosen_algo == LOCAL_REVISITED_WEDGE_SAMPLING) {
+			fprintf(IO::fout, "%d, Rev Wedge Samp, %.2f, %d, %.2f, %.4f", (int)(res[0] + 1e-6), res[1], (int)(res[2] + 1e-6), res[3], res[4]);
 		}
 		fprintf(IO::fout, "\n");
 		std::fflush(IO::fout);
