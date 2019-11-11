@@ -1,4 +1,7 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #pragma once
+#include <algorithm>
 #include <string>
 #include <fstream>
 #include <sys/stat.h>
@@ -25,6 +28,7 @@ namespace IO {
 	void IO_addresses();
 	double get_file_size();
 	void create_folder();
-	bool check_if_file_exists();
+	bool check_if_file_exists(bool log);
+	void guess_input_file_name();
 }
 

@@ -55,18 +55,12 @@ namespace print {
 			fprintf(IO::fout, "algo, bfly, time");
 		}
 		else if (settings::chosen_algo == ONE_SHOT_DOULION) {
-			fprintf(IO::fout, "itr, algo, prob, bfly, time");
+			fprintf(IO::fout, "itr, algo, prob, bfly, graph_construction_time, triangle_count_in_sampled_graph_time, time");
 		}
 		else if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
-			fprintf(IO::fout, "itr, algo, n_colors, bfly, time");
+			fprintf(IO::fout, "itr, algo, n_colors, bfly, graph_construction_time, triangle_count_in_sampled_graph_time, time");
 		} 
-		else if (settings::chosen_algo == ONE_SHOT_EDGE_WEDGE_SAMPLING) {
-			fprintf(IO::fout, "itr, algo, prob, bfly, time");
-		}
-		else if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
-			fprintf(IO::fout, "itr, algo, preproc time, #sampled wedge, bfly, time");
-		}
-		else if (settings::chosen_algo == LOCAL_REVISITED_WEDGE_SAMPLING) {
+		else if (settings::is_local_sampling_algorithm()) {
 			fprintf(IO::fout, "itr, algo, preproc time, #sampled wedge, bfly, time");
 		}
 		fprintf(IO::fout, "\n");
@@ -75,22 +69,17 @@ namespace print {
 
 	void print_result(std::vector <double> res) {
 		if (settings::chosen_algo == EXACT) {
-			fprintf(IO::fout, "Exact, %.2f, %.4f", res[0], res[1]);
+			fprintf(IO::fout, "Exact, %.0f, %.4f", (res[0] + 1e-6), res[1]);
 		}
 		else if (settings::chosen_algo == ONE_SHOT_DOULION) {
-			fprintf(IO::fout, "%d, Doulion, %.2f, %.2f, %.4f", (int)(res[0] + 1e-6), settings::p, res[1], res[2]);
+			fprintf(IO::fout, "%d, Doulion, %g, %.2f, %.4f, %.4f, %.4f", (int)(res[0] + 1e-6), settings::p, res[1], res[2], res[3], res[4]);
 		}
 		else if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
-			fprintf(IO::fout, "%d, Colorful, %d, %.2f, %.4f", (int)(res[0] + 1e-6), settings::n_colors, res[1], res[2]);
+			fprintf(IO::fout, "%d, Colorful, %d, %.2f, %.4f, %.4f, %.4f", (int)(res[0] + 1e-6), settings::n_colors, res[1], res[2], res[3], res[4]);
 		}
-		else if (settings::chosen_algo == ONE_SHOT_EDGE_WEDGE_SAMPLING) {
-			fprintf(IO::fout, "%d, EWSamp, %.2f, %.2f, %.4f", (int)(res[0] + 1e-6), settings::p, res[1], res[2]);
-		}
-		else if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
-			fprintf(IO::fout, "%d, Wedge Samp, %.2f, %d, %.2f, %.4f", (int)(res[0] + 1e-6), res[1], (int)(res[2] + 1e-6), res[3], res[4]);
-		}
-		else if (settings::chosen_algo == LOCAL_REVISITED_WEDGE_SAMPLING) {
-			fprintf(IO::fout, "%d, Rev Wedge Samp, %.2f, %d, %.2f, %.4f", (int)(res[0] + 1e-6), res[1], (int)(res[2] + 1e-6), res[3], res[4]);
+		else if (settings::is_local_sampling_algorithm()) {
+			fprintf(IO::fout, "%d, %s, %.2f, %lld, %.4f, %.2f", 
+				(int)(res[0] + 1e-6), constants::suffix_output_address[settings::chosen_algo].c_str(), res[1], (long long)(res[2] + 1e-6), res[3], res[4]);
 		}
 		fprintf(IO::fout, "\n");
 		std::fflush(IO::fout);

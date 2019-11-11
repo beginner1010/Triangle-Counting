@@ -37,7 +37,10 @@ namespace IO {
 	}
 
 	void create_folder() {
-		std::string folder_name = constants::folder_algo_name[settings::chosen_algo];
+		std::string folder_name = "";
+		if (settings::is_exact_algorithm()) folder_name = "exact";
+		else if (settings::is_one_shot_algorithm()) folder_name = "one_shot";
+		else if (settings::is_local_sampling_algorithm()) folder_name = "local_sampling";
 #ifdef _WIN32
 		::_mkdir("./output");
 		::_mkdir(("./output/" + IO::input_file_name).c_str());
@@ -51,23 +54,19 @@ namespace IO {
 		std::string file_name = "";
 		file_name += settings::exp_repeatition == -1 ? "" : "rep=" + helper_functions::to_str(settings::exp_repeatition);
 		if (settings::chosen_algo == ONE_SHOT_DOULION) {
-			sprintf(buffer, "_p=%g", settings::p);
+			sprintf(buffer, "_p=[%g,%g]", settings::min_p, settings::max_p);
 			file_name += std::string(buffer);
-		}
+		} 
 		else if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
-			sprintf(buffer, "_nclr=%d", settings::n_colors);
+			sprintf(buffer, "_nclr=[%d,%d]", settings::min_clr, settings::max_clr);
 			file_name += std::string(buffer);
 		}
-		else if (settings::chosen_algo == ONE_SHOT_EDGE_WEDGE_SAMPLING) {
-			sprintf(buffer, "_p=%g", settings::p);
-			file_name += std::string(buffer);
-		}
-		else if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
+		else if (settings::is_local_sampling_algorithm() == true) {
 			sprintf(buffer, "_mxtime=%d", (int)(settings::max_time + 1e-6));
 			file_name += std::string(buffer);
 		}
 		file_name = constants::suffix_output_address[settings::chosen_algo] + (file_name != "" ? "_" : "") + file_name;
-		IO::output_address = "output/" + IO::input_file_name + "/" + folder_name + "/" + file_name + (settings::compressed ? "_coo" : "") + ".txt";
+		IO::output_address = "output/" + IO::input_file_name + "/" + folder_name + "/" + file_name + ".txt";
 		return;
 	}
 

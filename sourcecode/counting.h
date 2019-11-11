@@ -1,15 +1,31 @@
 #pragma once
-#include "Graph.h"
+#include <random>
 
-namespace counting {
-	namespace triangle {
-		unsigned long long exact_edge_centeric_global_counting(Graph &G);
-		int exact_edge_centeric_local_edge_counting(Graph &G, const std::pair<int, int>& edge);
-		unsigned long long exact_edge_centeric_local_vertex_counting(Graph &G, const int& vertex);
+#include "Graph.h"
+#include "sampler.h"
+
+namespace exact {
+	namespace global {
+		long long kai_exact_count(Graph& g);
+	}
+	namespace wedge {
+		int bfly_in_wedge(Graph& g, std::vector<int>& wedge);
 	}
 }
 
-namespace utill {
+namespace randomized {
+	namespace edge {
+		long double randomized_ebfc(Graph& g, int& vertex_left, int& vertex_right);
+		long double randomized_centered_ebfc(Graph& g, int& vertex_a, int& vertex_b);
+	}
+	namespace path {
+		bool z_forms_bfly(Graph& g, int& vertex_a, int& vertex_b);
+		bool centered_z_forms_bfly(Graph& g, int& vertex_a, int& vertex_b);
+	}
+	
+}
+
+namespace utility {
 	int intersect(Graph& G, const int &x, const int &y);
 	double normalized(const double unnormalized, const double factor);
 }

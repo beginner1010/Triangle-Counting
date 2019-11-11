@@ -3,36 +3,41 @@
 
 namespace constants {
 	std::vector<std::string> algorithm_names = { 
-		EXACT, ONE_SHOT_DOULION, 
-		ONE_SHOT_COLORFUL, ONE_SHOT_EDGE_WEDGE_SAMPLING,
-		LOCAL_WEDGE_SAMPLING, LOCAL_REVISITED_WEDGE_SAMPLING, 
-		STREAMING_TRIEST_BASE, STREAMING_TRIEST_IMPR, STREAMING_MASCOT_C, STREAMING_MASCOT };
-	std::unordered_map<std::string, std::string> folder_algo_name = 
-	{
-		{ EXACT, "exact" },
-		{ ONE_SHOT_DOULION, "one_shot" },{ ONE_SHOT_COLORFUL, "one_shot" },	{ONE_SHOT_EDGE_WEDGE_SAMPLING, "one_shot"},
-		{ LOCAL_WEDGE_SAMPLING , "local_sampling" }, { LOCAL_REVISITED_WEDGE_SAMPLING , "local_sampling"},
-		{ STREAMING_TRIEST_BASE , "streaming" }, { STREAMING_TRIEST_IMPR, "streaming" }, { STREAMING_MASCOT_C, "streaming" }, { STREAMING_MASCOT, "streaming" }
-	};
+		EXACT, 
+		ONE_SHOT_COLORFUL,
+		ONE_SHOT_DOULION,
+		FAST_EDGE_SAMPLING,
+		WEDGE_SAMPLING,
+		FAST_CENTERED_EDGE_SAMPLING, PATH_SAMPLING,
+		PATH_CENTERED_SAMPLING, PATH_CENTERED_SAMPLING_BY_WEDGE,
+		PATH_CENTERED_SAMPLING_BY_DEGENERACY };
 	std::unordered_map<std::string, std::string> suffix_output_address =
 	{
 		{ EXACT, "exact" },
-		{ ONE_SHOT_DOULION, "doulion" },{ ONE_SHOT_COLORFUL, "colorful" }, {ONE_SHOT_EDGE_WEDGE_SAMPLING, "ewsamp"},
-		{ LOCAL_WEDGE_SAMPLING , "wedge" }, { LOCAL_REVISITED_WEDGE_SAMPLING , "revisited_wedge"},
-		{ STREAMING_TRIEST_BASE , "triest_base" },{ STREAMING_TRIEST_IMPR, "impr" },{ STREAMING_MASCOT_C, "mascot_C" },	{ STREAMING_MASCOT, "mascot" }
+		{ ONE_SHOT_DOULION, "doulion" },
+		{ ONE_SHOT_COLORFUL, "colorful" },
+		{ FAST_EDGE_SAMPLING, "fast_edge" },
+		{ FAST_CENTERED_EDGE_SAMPLING, "c_fast_edge" },
+		{ PATH_SAMPLING, "path" },
+		{ PATH_CENTERED_SAMPLING , "c_path" },
+		{ PATH_CENTERED_SAMPLING_BY_WEDGE , "c_path_ord_wedge" },
+		{ WEDGE_SAMPLING, "wedge" },
+		{ PATH_CENTERED_SAMPLING_BY_DEGENERACY, "c_path_ord_degen" }
 	};
+	int ebfc_iterations = 2000;
 }
 
 namespace settings {
 	int snapshots;
 	long double max_time = -1;
 	int exp_repeatition = -1;
-	int n_colors;
-	double p;
-	bool compressed = false;
-	int reservoir_size;
+	int n_colors = -1;
+	double p = -1;
+	double min_p, max_p;
+	int min_clr, max_clr;
 	std::string chosen_algo;
 	std::vector<std::string>::iterator itr;
+
 	void get_settings() {
 		settings::clear_settings();
 		while (true) {
@@ -53,37 +58,58 @@ namespace settings {
 			}
 		}
 
-		if (settings::is_streaming_algorithm() == false) {
-			std::cerr << " Run experiments on COO (compressed) version of graph ? (y/n)" << std::endl;
-			compressed = helper_functions::yesno_query();
-		}
-
 		if (settings::is_exact_algorithm() == false) {
 			std::cerr << " Insert #repeatition of the experiments:" << std::endl;
 			std::cerr << " >>> "; std::cin >> settings::exp_repeatition;
 		}
 
-		if (settings::is_local_sampling_algorithm() == true) {
-			std::cerr << " Insert the execution time (in seconds):" << std::endl;
-			std::cerr << " >>> "; std::cin >> settings::max_time;
+		if (settings::chosen_algo == ONE_SHOT_DOULION) {
+			std::cerr << " Insert the sampling probability:" << std::endl;
+			std::string line;
+			std::cerr << " >>> "; std::cin >> line;
+			if (line.find(',') != std::string::npos) {
+				line[line.find(',')] = ' ';
+				std::stringstream ss; ss << line;
+				ss >> settings::min_p >> settings::max_p;
+				settings::p = settings::min_p;
+			}else {
+				settings::p = helper_functions::to_double(line);
+				settings::min_p = settings::max_p = settings::p; 
+			}
+			assert(0.0 < settings::min_p && settings::max_p <= 1.0);
 		}
 
 		if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
 			std::cerr << " Insert #colors for painting vertices:" << std::endl;
-			std::cerr << " >>> "; std::cin >> settings::n_colors;
-			assert(settings::n_colors > 1);
-		}
-
-		if ((std::unordered_set<std::string>({ ONE_SHOT_DOULION, ONE_SHOT_EDGE_WEDGE_SAMPLING, STREAMING_MASCOT_C, STREAMING_MASCOT })).count(settings::chosen_algo) > 0) {
-			std::cerr << " Insert the sampling probability:" << std::endl;
-			std::cerr << " >>> "; std::cin >> settings::p;
-			assert(0.0 < settings::p && settings::p <= 1.0);
+			std::string line;
+			std::cerr << " >>> "; std::cin >> line;
+			if (line.find(',') != std::string::npos) {
+				line[line.find(',')] = ' ';
+				std::stringstream ss; ss << line;
+				ss >> settings::min_clr >> settings::max_clr;
+				settings::n_colors = settings::max_clr;
+			}
+			else {
+				settings::n_colors = helper_functions::to_int(line);
+				settings::min_clr = settings::max_clr = settings::n_colors;
+			}
+			assert(settings::min_clr >= 1);
 		}
 
 		if (settings::is_local_sampling_algorithm() == true) {
-			std::cerr << " Insert # snapshots (# lines in output):" << std::endl;
-			std::cerr << " >>> "; std::cin >> settings::snapshots;
-			assert(0 < settings::snapshots);
+			std::cerr << " Insert the execution time (in seconds):" << std::endl;
+			std::cerr << " >>> "; std::cin >> settings::max_time;
+			assert(settings::max_time >= 1.0);
+		}
+
+		if (settings::is_local_sampling_algorithm() == true) {
+			/* 
+				I removed this setting as I am going to print output files simply every second.
+				//std::cerr << " Insert # snapshots (# lines in output per experiment):" << std::endl;
+				//std::cerr << " >>> "; std::cin >> settings::snapshots;
+				//assert(0 < settings::snapshots);
+			*/
+			settings::snapshots = (int)(settings::max_time + 1e-6);
 		}
 	}
 
@@ -92,15 +118,22 @@ namespace settings {
 	}
 
 	bool is_one_shot_algorithm() {
-		return std::unordered_set<std::string>({ ONE_SHOT_DOULION, ONE_SHOT_COLORFUL, ONE_SHOT_EDGE_WEDGE_SAMPLING }).count(settings::chosen_algo) > 0;
+		return std::unordered_set<std::string>({
+			ONE_SHOT_DOULION,
+			ONE_SHOT_COLORFUL
+		}).count(settings::chosen_algo) > 0;
 	}
 
 	bool is_local_sampling_algorithm() {
-		return std::unordered_set<std::string>({ LOCAL_WEDGE_SAMPLING, LOCAL_REVISITED_WEDGE_SAMPLING }).count(settings::chosen_algo) > 0;
-	}
-
-	bool is_streaming_algorithm() {
-		return std::unordered_set<std::string>({ STREAMING_MASCOT, STREAMING_MASCOT_C, STREAMING_TRIEST_BASE, STREAMING_TRIEST_IMPR }).count(settings::chosen_algo) > 0;
+		return std::unordered_set<std::string>({ 
+			FAST_EDGE_SAMPLING, 
+			FAST_CENTERED_EDGE_SAMPLING,
+			WEDGE_SAMPLING,
+			PATH_SAMPLING,
+			PATH_CENTERED_SAMPLING,
+			PATH_CENTERED_SAMPLING_BY_WEDGE,
+			PATH_CENTERED_SAMPLING_BY_DEGENERACY
+		}).count(settings::chosen_algo) > 0;
 	}
 
 	void clear_settings() {
@@ -113,7 +146,38 @@ namespace settings {
 		std::cerr << " Would you like to try experiments for the same graph but different algorithms/settings?(y/n)" << std::endl;
 		return helper_functions::yesno_query();
 	}
-
+	int next_parameter() {
+		if (settings::chosen_algo == ONE_SHOT_DOULION) {
+			if (settings::p >= settings::max_p) {
+				settings::p = settings::min_p;
+				return -1;
+			}
+			else if (settings::p * 2 <= settings::max_p || helper_functions::is_equal(settings::p, settings::max_p)) {
+				settings::p = settings::p * 2;
+				return 0;
+			}
+			else {
+				settings::p = mmin(settings::max_p, settings::p + 0.05);
+				return 0;
+			}
+		}
+		else if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
+			if (settings::n_colors == settings::min_clr) {
+				settings::n_colors = settings::max_clr; // return it back to the initial value
+				return -1;
+			}
+			else if (settings::n_colors / 2 >= settings::min_clr) {
+				settings::n_colors = settings::n_colors / 2;
+				return 0;
+			}
+			else {
+				settings::n_colors = mmax(settings::min_clr, settings::n_colors - 20);
+				return 0;
+			}
+		}
+		else
+			return -2; // should never happen!
+	}
 }
 
 namespace helper_functions {
@@ -127,6 +191,11 @@ namespace helper_functions {
 		int x; ss >> x;
 		return x;
 	}
+	double to_double(const std::string& str) {
+		std::stringstream ss; ss << str;
+		double x; ss >> x;
+		return x;
+	}
 	bool is_int_num(const std::string& str) {
 		if ((int)str.size() > 9)
 			return false;
@@ -135,6 +204,9 @@ namespace helper_functions {
 				return false;
 		}
 		return true;
+	}
+	bool is_equal(double a, double b) {
+		return std::fabs(a - b) <= 1e-6;
 	}
 	long long choose2(int x) {
 		return ((long long)x * (x - 1)) >> 1;

@@ -1,17 +1,27 @@
 #include "sampler.h"
 
-std::pair<int, long long > sampler::weighted_sampling(const std::vector<long long>& cum_weights) {
-	long long sum = cum_weights.back();
-	long long random_weight = this->generate_random_int(1, sum);
-	int lo = 0, hi = (int)cum_weights.size();
-	while (lo < hi) {
-		int mid = (lo + hi) >> 1;
-		if (cum_weights[mid] < random_weight) {
-			lo = mid + 1;
-		}
-		else {
-			hi = mid;
-		}
+
+namespace sampler {
+	std::uniform_int_distribution<long long> int_ran;
+	std::uniform_real_distribution<long double> dbl_ran;
+	std::mt19937_64 gen;
+
+	void reset() {
+		gen.seed(0LL);
 	}
-	return std::make_pair(lo, random_weight);
+
+	long long generate_random_int(long long A, long long B) {
+		decltype(int_ran.param()) new_range(A, B);
+		int_ran.param(new_range);
+		return int_ran(gen);
+	}
+
+	double generate_random_dbl(double A, double B) {
+		decltype(dbl_ran.param()) new_range(A, B);
+		dbl_ran.param(new_range);
+		return dbl_ran(gen);
+	}
+	void reseed(int seed) {
+		gen.seed(seed);
+	}
 }

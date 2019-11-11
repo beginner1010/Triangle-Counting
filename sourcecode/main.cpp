@@ -18,37 +18,37 @@ int main() {
 
 	bool run = true;
 	while (run) {
+		graph.get_original_order();
+		sampler::reset();
 		settings::get_settings();
 		IO::create_folder();
-
-		if (settings::compressed == true) {
-			graph.compress_graph(true);
-		}
 
 		print::statistics_table(graph.get_n_vertices(), graph.get_n_edges(), graph.get_maximum_degree());
 
 		exact::algorithms* exact_algo = new exact::algorithms();
 		static_processing::one_shot::algorithms* static_one_shot_algo = new static_processing::one_shot::algorithms();
 		static_processing::local_sampling::algorithms* static_local_samp_algo = new static_processing::local_sampling::algorithms();
-		streamming::one_pass::algorithms* stream_one_pass_algo = new streamming::one_pass::algorithms();
 
 		IO::fout = fopen(IO::output_address.c_str(), "w");
 		print::print_header();
 		if (settings::chosen_algo == EXACT) {
 			exact_algo->reset();
-			exact_algo->edge_centric_exact_algorithm(graph);
+			exact_algo->exact_algorithm(graph);
 			auto global_triangle_count = exact_algo->get_unnormalized_count(); // unnormalized count in this case is indeed a normalized one since the counter is exact.
 			print::print_result({global_triangle_count, exact_algo->get_runtime()});
 		}
 		else {
 			for (int iter_exp = 1; iter_exp <= settings::exp_repeatition; iter_exp++) {
 				if (settings::is_one_shot_algorithm() == true) {
-					static_one_shot_algo->reset();
+					while (true) {
+						static_one_shot_algo->reset();
+						static_one_shot_algo->run(graph);
+						print::print_result(static_one_shot_algo->get_results(iter_exp));
+						if (settings::next_parameter() == -1) // a parameter (prob or n_color) is changed here!
+							break;
+					}
 					print::clear_line();
 					print::done_experiments(iter_exp);
-					static_one_shot_algo->run(graph);
-					print::print_result(static_one_shot_algo->get_results(iter_exp));
-
 				} else if (settings::is_local_sampling_algorithm() == true) {
 					static_local_samp_algo->setup(iter_exp, graph);
 					double tolerance = settings::max_time / settings::snapshots - 1e-6;
