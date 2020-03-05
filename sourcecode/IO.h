@@ -1,7 +1,7 @@
-#define _CRT_SECURE_NO_WARNINGS
-
 #pragma once
-#include <algorithm>
+#ifdef __GNUC__
+	#include<bits/stdc++.h>
+#endif
 #include <string>
 #include <fstream>
 #include <sys/stat.h>

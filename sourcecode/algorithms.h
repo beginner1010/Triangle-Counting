@@ -1,14 +1,22 @@
 #pragma once
 
+#include <set>
+
 #include "Graph.h"
 #include "counting.h"
 #include "sampler.h"
+#include "reservoir.h"
+
+#include <boost/math/distributions/hypergeometric.hpp>
+#include <boost/math/distributions/hypergeometric.hpp>
+#include <boost/math/policies/policy.hpp>
 
 namespace base_algorithm_class {
-	class algorithms {
+	class algorithms : public sampler {
 	protected:
 		double unnormalized_triangle_count;
 		double runtime;
+		double pre_runtime;
 	public:
 		algorithms() {
 			this->reset();
@@ -16,9 +24,13 @@ namespace base_algorithm_class {
 		inline double get_runtime() {
 			return this->runtime;
 		}
-		virtual void reset() {
+		inline double get_preprocessing_time() {
+			return this->pre_runtime;
+		}
+		void reset() {
 			this->unnormalized_triangle_count = 0;
 			this->runtime = 0;
+			this->pre_runtime = 0;
 		}
 		double get_unnormalized_count() {
 			return this->unnormalized_triangle_count;
@@ -29,111 +41,115 @@ namespace base_algorithm_class {
 namespace exact {
 	class algorithms : public base_algorithm_class::algorithms {
 	public:
-		void exact_algorithm(Graph& G);
+		void edge_centric_exact_algorithm(Graph& G);
 	};
 }
 
 namespace static_processing {
 	namespace one_shot {
 		class algorithms : public base_algorithm_class::algorithms {
-		private:
-			/* Static graph: Approximation by one shot sampling */
-			void doulion(Graph& G);
-			void colorful_counting(Graph& G);
-			double graph_construction_time;
-			double counting_on_sampled_graph_time;
 		public:
+			/* Static graph: Approximation by one shot sampling */
+			void doulion(Graph& G, const double p);
+			void colorful_counting(Graph& G, const int n_color);
+			void ewsamp(Graph& G, const double p);
 			void run(Graph& G);
-			void reset() override {
-				base_algorithm_class::algorithms::reset();
-				this->graph_construction_time = 0;
-				this->counting_on_sampled_graph_time = 0;
-			}
-			inline double get_construction_time() {
-				return this->graph_construction_time;
-			}
-			inline double get_counting_on_sampled_graph_time() {
-				return this->counting_on_sampled_graph_time;
-			}
-			std::vector<double> get_results(const int& iter_exp);
+			std::vector<double> get_results(const int& exp_iter);
 		};
 	}
 
 	namespace local_sampling {
 		class algorithms : public base_algorithm_class::algorithms {
 		private:
-			double preprocessing_time;
 			double interval_time;
 			double last_time_printed;
-			long long n_sampled;
-			/* Static graph: Approximation by local sampling */
-			void fast_edge_sampling(Graph& G);
-			void fast_centered_edge_sampling(Graph& G);
-			void wedge_sampling(Graph& G);
-			void path_sampling(Graph& G);
-			void path_centered_sampling(Graph& G);
-			void path_centered_sampling_by_wedge(Graph& G);
-			void path_centered_sampling_by_degeneracy(Graph& G);
+			int n_sampled;
 		public:
-			void setup(const int& iter_exp, Graph& G) {
-				this->reset();
-				this->n_sampled = 0;
-				this->last_time_printed = 0;
-				this->interval_time = settings::max_time / settings::snapshots;
-				
-				if (iter_exp == 1) {
-					if (settings::chosen_algo == FAST_EDGE_SAMPLING) {
-						this->preprocessing_time = 0;
-					}
-					else if (settings::chosen_algo == FAST_CENTERED_EDGE_SAMPLING) {
-						clock_t start_time = clock();
-						G.sort_vertices_by_degree(); // Question: why edges are kept the same as vanilla fast edge sampling?
-						this->preprocessing_time = ((double)clock() - start_time) / CLOCKS_PER_SEC;
-					}
-					else if (settings::chosen_algo == WEDGE_SAMPLING) {
-						clock_t start_time = clock();
-						G.get_n_w();
-						this->preprocessing_time = ((double)clock() - start_time) / CLOCKS_PER_SEC;
-					}
-					else if (settings::chosen_algo == PATH_SAMPLING) {
-						clock_t start_time = clock();
-						G.get_n_z();
-						this->preprocessing_time = ((double)clock() - start_time) / CLOCKS_PER_SEC;
-					}
-					else if (settings::chosen_algo == PATH_CENTERED_SAMPLING) {
-						clock_t start_time = clock();
-						G.sort_vertices_by_degree();
-						G.get_n_centered_z();
-						this->preprocessing_time = ((double)clock() - start_time) / CLOCKS_PER_SEC;
-					}
-					else if (settings::chosen_algo == PATH_CENTERED_SAMPLING_BY_WEDGE) {
-						clock_t start_time = clock();
-						G.get_n_z();
-						G.sort_vertices_by_wedges();
-						this->preprocessing_time = ((double)clock() - start_time) / CLOCKS_PER_SEC;
-					}
-					else if (settings::chosen_algo == PATH_CENTERED_SAMPLING_BY_DEGENERACY) {
-						clock_t start_time = clock();
-						G.sort_vertices_by_degeneracy();
-						G.get_n_centered_z();
-						this->preprocessing_time = ((double)clock() - start_time) / CLOCKS_PER_SEC;
-					}
-				}
-			}
+			void setup(Graph& G, const int& iter_exp);
 			inline void update_last_time_printed(const double& current_time) {
 				this->last_time_printed = current_time;
 			}
 			inline bool should_print(const double& current_time) {
-				return current_time - this->last_time_printed >= this->interval_time;
+				return current_time - this->last_time_printed > this->interval_time;
 			}
-			inline double get_preprocessing_time() {
-				return this->preprocessing_time;
-			}
-			inline long long get_n_sampled() {
+			inline int get_n_sampled() {
 				return this->n_sampled; 
 			}
+			/* Static graph: Approximation by local sampling */
+			void wedge_sampling(Graph& G);
+			void revisited_wedge_sampling(Graph& G);
+
 			void run(Graph& G);
 			std::vector<double> get_results(const int& iter_exp, Graph& G);
+			std::vector<double> get_results(const int& exp_iter);
+			virtual void reset() {
+				base_algorithm_class::algorithms::reset();
+				this->last_time_printed = 0;
+				this->n_sampled = 0;
+			}
+		};
+	}
+}
+
+namespace streamming {
+	namespace one_pass {
+		class algorithms : public base_algorithm_class::algorithms {
+		private:
+			reservoir R;
+			int time_step;
+			int stream_size;
+			int interval_batch;
+			int stream_current_size;
+		public:
+			void reset(Graph& G) {
+				base_algorithm_class::algorithms::reset();
+				this->R.clear();
+				this->R.set_max_size(settings::reservoir_size);
+				this->time_step = 0;
+				if (settings::is_streaming_insertion_only() == true) this->stream_size = (int)G.get_insertion_only_stream().size();
+				else this->stream_size = (int)G.get_fully_dynamic_stream().size();
+				settings::p = mmin(1.0, ((double)settings::reservoir_size) / (this->stream_size + 0.0));
+				// for algorithm GPS
+				this->rank_set.clear();
+				this->lookup_weight.clear();
+				this->z_star = 0;
+				// for random pairing sampling, used in triest-fd and thinkd-acc
+				this->n_b = 0;
+				this->n_g = 0;
+				this->current_n_edges = 0;
+				this->stream_current_size = 0;
+				// end!
+			}
+			inline void set_interval(Graph& G) {
+				if (settings::is_streaming_insertion_only())
+					this->interval_batch = mmax(1, ((int)G.get_insertion_only_stream().size()) / settings::snapshots);
+				else
+					this->interval_batch = mmax(1, ((int)G.get_fully_dynamic_stream().size()) / settings::snapshots);
+			}
+			inline bool should_print() {
+				return this->time_step == this->stream_size || this->interval_batch == 1 || (this->time_step > 0 && this->time_step % this->interval_batch == 0);
+			}
+			// ---------- insertion only algorithms ----------------
+			void exact_ins_only(const int& A, const int& B);
+			void triest_base(const int& A, const int& B);
+			void triest_impr(const int& A, const int& B);
+			void mascot(const int& A, const int& B);
+			void mascot_C(const int& A, const int& B);
+			void gps(const int& A, const int& B);
+			// the following variables are used for GPS algorithm
+			std::set < std::pair< double, std::pair <int, int> > > rank_set;
+			std::unordered_map <long long, double> lookup_weight;
+			double z_star;
+			// ---------- fully dynamic -----------------------------
+			void exact_full_dyn(const int& A, const int& B, bool op);
+			void triest_fd(const int& A, const int& B, bool op);
+			void thinkd_acc(const int& A, const int& B, bool op);
+			// the following variables are used in triest_fd and thinkd_acc algorithms
+			int n_b, n_g;
+			int current_n_edges;
+			// end!
+			void run(const int& A, const int& B, const bool op);
+			std::vector<double> get_results(int exp_iter);
 		};
 	}
 }

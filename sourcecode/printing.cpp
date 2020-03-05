@@ -29,17 +29,16 @@ namespace print {
 	}
 
 	void finished_work(const double& cur_time, const std::string text) {
-		std::cerr << " " << text << " in " << cur_time << " secs." << std::endl;
+		std::cerr << " " << text << " in " << cur_time << " secs.\n";
 		std::cerr.flush();
 	}
 
 	void clear_line() {
-		std::cerr << "\r" << std::string(100, ' ') << "\r" ;
+		std::cerr << "\r" << std::string(200, ' ') << "\r" ;
 	}
 
 	void statistics_table(int n, int m, int maximum_degree) {
 		std::cerr << " See the statistics below :" << std::endl;
-		
 		int width = (5 * 2 - 1) + 12 + 15 + 10;
 		std::string hline = " " + std::string(width, '-');
 		std::cerr << hline << std::endl;
@@ -52,16 +51,31 @@ namespace print {
 
 	void print_header() {
 		if (settings::chosen_algo == EXACT) {
-			fprintf(IO::fout, "algo, bfly, time");
+			fprintf(IO::fout, "algo, tri, time, wedges");
 		}
 		else if (settings::chosen_algo == ONE_SHOT_DOULION) {
-			fprintf(IO::fout, "itr, algo, prob, bfly, graph_construction_time, triangle_count_in_sampled_graph_time, time");
+			fprintf(IO::fout, "itr, algo, prob, G-samp-time, tri, time");
 		}
 		else if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
-			fprintf(IO::fout, "itr, algo, n_colors, bfly, graph_construction_time, triangle_count_in_sampled_graph_time, time");
+			fprintf(IO::fout, "itr, algo, n_colors, G-samp-time, tri, time");
 		} 
-		else if (settings::is_local_sampling_algorithm()) {
-			fprintf(IO::fout, "itr, algo, preproc time, #sampled wedge, bfly, time");
+		else if (settings::chosen_algo == ONE_SHOT_EDGE_WEDGE_SAMPLING) {
+			fprintf(IO::fout, "itr, algo, prob, G-samp-time, tri, time");
+		}
+		else if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
+			fprintf(IO::fout, "itr, algo, preproc-time, #sampled wedge, tri, time");
+		}
+		else if (settings::chosen_algo == LOCAL_REVISITED_WEDGE_SAMPLING) {
+			fprintf(IO::fout, "itr, algo, preproc-time, #sampled wedge, tri, time");
+		} 
+		else if (settings::chosen_algo == EXACT_INS_ONLY) {
+			fprintf(IO::fout, "algo, tri, time, #processed_edges");
+		}
+		else if (settings::chosen_algo == EXACT_FULL_DYN) {
+			fprintf(IO::fout, "algo, tri, time, #processed_edges");
+		}
+		else if(settings::is_streaming_algorithm() == true) {
+			fprintf(IO::fout, "itr, algo, tri, time, #processed_edges, reservoir-size, reservoir-used");
 		}
 		fprintf(IO::fout, "\n");
 		std::fflush(IO::fout);
@@ -69,17 +83,34 @@ namespace print {
 
 	void print_result(std::vector <double> res) {
 		if (settings::chosen_algo == EXACT) {
-			fprintf(IO::fout, "Exact, %.0f, %.4f", (res[0] + 1e-6), res[1]);
+			fprintf(IO::fout, "Exact, %.2f, %.2f, %.1f", res[0], res[1], res[2]);
 		}
 		else if (settings::chosen_algo == ONE_SHOT_DOULION) {
-			fprintf(IO::fout, "%d, Doulion, %g, %.2f, %.4f, %.4f, %.4f", (int)(res[0] + 1e-6), settings::p, res[1], res[2], res[3], res[4]);
+			fprintf(IO::fout, "%d, Doulion, %g, %.2f, %.2f, %.2f", (int)(res[0] + 1e-6), settings::p, res[1], res[2], res[3]);
 		}
 		else if (settings::chosen_algo == ONE_SHOT_COLORFUL) {
-			fprintf(IO::fout, "%d, Colorful, %d, %.2f, %.4f, %.4f, %.4f", (int)(res[0] + 1e-6), settings::n_colors, res[1], res[2], res[3], res[4]);
+			fprintf(IO::fout, "%d, Colorful, %d, %.2f, %.2f, %.2f", (int)(res[0] + 1e-6), settings::n_colors, res[1], res[2], res[3]);
 		}
-		else if (settings::is_local_sampling_algorithm()) {
-			fprintf(IO::fout, "%d, %s, %.2f, %lld, %.4f, %.2f", 
-				(int)(res[0] + 1e-6), constants::suffix_output_address[settings::chosen_algo].c_str(), res[1], (long long)(res[2] + 1e-6), res[3], res[4]);
+		else if (settings::chosen_algo == ONE_SHOT_EDGE_WEDGE_SAMPLING) {
+			fprintf(IO::fout, "%d, EWSamp, %g, %.2f, %.2f, %.2f", (int)(res[0] + 1e-6), settings::p, res[1], res[2], res[3]);
+		}
+		else if (settings::chosen_algo == LOCAL_WEDGE_SAMPLING) {
+			fprintf(IO::fout, "%d, Wedge-Samp, %.2f, %d, %.2f, %.2f", (int)(res[0] + 1e-6), res[1], (int)(res[2] + 1e-6), res[3], res[4]);
+		}
+		else if (settings::chosen_algo == LOCAL_REVISITED_WEDGE_SAMPLING) {
+			fprintf(IO::fout, "%d, Rev-Wedge-Samp, %.2f, %d, %.2f, %.2f", (int)(res[0] + 1e-6), res[1], (int)(res[2] + 1e-6), res[3], res[4]);
+		}
+		else if (settings::chosen_algo == EXACT_INS_ONLY) {
+			fprintf(IO::fout, "%s, %.2f, %.2f, %lld", constants::suffix_output_address[settings::chosen_algo].c_str(), res[0],
+				res[1], (long long)(res[2] + 1e-6));
+		}
+		else if (settings::chosen_algo == EXACT_FULL_DYN) {
+			fprintf(IO::fout, "%s, %.2f, %.2f, %lld", constants::suffix_output_address[settings::chosen_algo].c_str(), res[0],
+				res[1], (long long)(res[2] + 1e-6));
+		}
+		else if (settings::is_streaming_algorithm() == true) {
+			fprintf(IO::fout, "%d, %s, %.2f, %.2f, %lld, %d, %lld", (int)(res[0] + 1e-6), constants::suffix_output_address[settings::chosen_algo].c_str(), res[1],
+				res[2], (long long)(res[3] + 1e-6), settings::reservoir_size, (long long)(res[4] + 1e-6));
 		}
 		fprintf(IO::fout, "\n");
 		std::fflush(IO::fout);

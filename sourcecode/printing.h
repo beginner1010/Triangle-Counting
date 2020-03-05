@@ -6,6 +6,9 @@
 
 #include "utills.h"
 
+#define mmin(x,y) ((x)>(y)?(y):(x))
+#define mmax(x,y) ((x)<(y)?(y):(x))
+
 namespace print {
 	void done_experiments(const int& iter_exp);
 	void done_work_percentage(double done_work, double total_work, std::string text);
