@@ -494,17 +494,18 @@ namespace streamming {
 			}
 			else {
 				if (settings::chosen_algo == STREAMING_MASCOT) {
-					global_triangle_count = unnormalized * (1.0 / settings::p) *  (1.0 / settings::p);
+					global_triangle_count = (unnormalized / settings::p) *  (1.0 / settings::p);
 				} 
 				else if (settings::chosen_algo == STREAMING_MASCOT_C) {
-					global_triangle_count = unnormalized * (1.0 / settings::p) *  (1.0 / settings::p)  *  (1.0 / settings::p);
+					global_triangle_count = unnormalized;
+					for(int i = 0; i < 3; i ++)
+						global_triangle_count /= settings::p;
 				} 
 				else if(settings::chosen_algo == STREAMING_TRIEST_BASE) {
 					double eta = 1.0;
 					if (this->time_step > this->R.get_maximum_size()) {
-						for (int i = 0; i < 3; i++) {
+						for (int i = 0; i < 3; i++)
 							eta *= ((double)(this->time_step - i)) / ((double)(this->R.get_maximum_size() - i));
-						}
 					}
 					global_triangle_count = unnormalized * eta;
 				} 
